@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from math import sqrt, pi
 
-class planet:
+class orbit:
     def __init__(self, a , e, omega=0, t0 = 3.14):
         GM = 1.1723328e18 #Kerbol
         self.a = a # semi-major axis
@@ -51,14 +51,14 @@ class planet:
         self.t = np.linspace(t_win, t_arrival, 50)
         self.phi, self.r = self.calc_polar(self.t)
 
-def calc_hohmann(src_planet, dst_planet, t0):
+def calc_hohmann(src_orbit, dst_orbit, t0):
     """
     Calculate semi-major axis, eccentricity, average angular velocity and time for Hohmann transfer.
     """
     GM = 1.1723328e18 #Kerbol grav const
 
     # position of src known at t0
-    phi, r_src = src_planet.calc_polar(t0)
+    phi, r_src = src_orbit.calc_polar(t0)
     
     # initial guess for dest is using 0 time for Hohmann transfer
     hohmann_time = 0
@@ -66,7 +66,7 @@ def calc_hohmann(src_planet, dst_planet, t0):
 
     # Iterate a better Hohmann time by recalculating destination
     while abs(hohmann_time_prev-hohmann_time) > 1:
-        phi, r_dst = dst_planet.calc_polar(t0+hohmann_time)
+        phi, r_dst = dst_orbit.calc_polar(t0+hohmann_time)
         # semi-major axis
         a = (r_src + r_dst) / 2
         # Time of Hohmann transfer is half of the Hohmann orbit
@@ -86,61 +86,68 @@ def calc_hohmann(src_planet, dst_planet, t0):
     
     return a,e,n,hohmann_time
 
-def plot_planets(planet_list):
+def plot_orbits(orbit_list):
     """Plot planet orbits, 0: source, 1: destination, 2: transfer orbit """
     fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
     ax.clear()
-    for p in planet_list:
+    for p in orbit_list:
         ax.plot(p.phi, p.r)
-    ax.plot(planet_list[0].calc_polar(t_win)[0],planet_list[0].calc_polar(t_win)[1], 'o', label="Launch")
-    ax.plot(planet_list[1].calc_polar(t_arrival)[0],planet_list[1].calc_polar(t_arrival)[1], 'o', label="Arrival")
-    ax.plot(planet_list[2].calc_polar(t_win)[0],planet_list[2].calc_polar(t_win)[1], 'x', label="Hohmann launch")
-    ax.plot(planet_list[2].calc_polar(t_arrival)[0],planet_list[2].calc_polar(t_arrival)[1], 'x', label="Hohmann arrival")
+    ax.plot(orbit_list[0].calc_polar(t_win)[0],orbit_list[0].calc_polar(t_win)[1], 'o', label="Launch")
+    ax.plot(orbit_list[1].calc_polar(t_win)[0],orbit_list[1].calc_polar(t_win)[1], 'o', label="Dest at launch")
+    ax.plot(orbit_list[1].calc_polar(t_arrival)[0],orbit_list[1].calc_polar(t_arrival)[1], 'o', label="Arrival")
+    ax.plot(orbit_list[2].calc_polar(t_win)[0],orbit_list[2].calc_polar(t_win)[1], 'x', label="Hohmann launch")
+    ax.plot(orbit_list[2].calc_polar(t_arrival)[0],orbit_list[2].calc_polar(t_arrival)[1], 'x', label="Hohmann arrival")
     
     ax.set_rticks([0.5, 1, 1.5, 2])  # Less radial ticks
     ax.set_rlabel_position(-22.5)  # Move radial labels away from plotted line
     ax.grid(True)
     ax.legend(loc=1)
-# %% 
-# Testing during development
-if __name__ == "__main__":
-    #Moho = planet(a=5263138304, e=0.2, omega=70)
-    Eve = planet(a=9832684544, e=0.01, omega=15)
-    Kerbin = planet(a=13599840256, e=0)
-    #Duna = planet(a=20726155264, e=0.051, omega=135.5)
 
+def calc_window(src_orbit, dest_orbit, t0):
     # angle difference at zero time
-    d_ang_0 = Eve.calc_mean_anomaly(0) - Kerbin.calc_mean_anomaly(0)
+    d_ang_0 = dest_orbit.calc_mean_anomaly(t0) - src_orbit.calc_mean_anomaly(t0)
     
     # First iteration
-    a,e,n,t_h = calc_hohmann(Kerbin, Eve, 0)
+    a,e,n,t_h = calc_hohmann(src_orbit, dest_orbit, t0)
     # Angle difference at ideal launch time, calculated with transfer time
-    d_ang = np.pi - t_h*Eve.n
+    d_ang = np.pi - t_h*dest_orbit.n
     # If the target is already past the position, the next opportunity must be searched
     if d_ang_0 > d_ang:
         d_ang = d_ang + 2*np.pi
     # time until next position
     # delta_ang0 + (Eve.n - Kerbin.n) * t_window = delta_ang
-    t_win = (d_ang - d_ang_0) / (Eve.n - Kerbin.n)
+    t_win = t0 + (d_ang - d_ang_0) / (dest_orbit.n - src_orbit.n)
     t_arrival = t_win + t_h
-    ang_win,r = Kerbin.calc_polar(t_win)
-    Hohmann = planet(a,e, omega = ang_win*180/np.pi+180, t0=-ang_win-t_win*n)
-    # Hohmann.recalc_orbit_visu(t_win,t_arrival)
-    # plot_planets([Kerbin, Eve, Hohmann])
+    ang_win,r = src_orbit.calc_polar(t_win)
+    # TODO: n is an average value, it's just for visuals so might be enough
+    Hohmann = orbit(a,e, omega = ang_win*180/np.pi+180, t0=-ang_win-t_win*n)
 
     # Real iteration
-    for i in range(5):
+    for i in range(9):
         # calculate timing error - by how much time we've missed the target when arriving
         t_arrival = t_win + t_h
-        t_miss = (Hohmann.calc_polar(t_arrival)[0] - Eve.calc_polar(t_arrival)[0])/Eve.n
+        t_miss = (Hohmann.calc_polar(t_arrival)[0] - dest_orbit.calc_polar(t_arrival)[0])/dest_orbit.n
         # modify start time using calculated error
         t_win = t_win + t_miss
         # recalculate transfer orbit
-        a,e,n,t_h = calc_hohmann(Kerbin, Eve, t_win)
-        ang_win,r = Kerbin.calc_polar(t_win)
-        Hohmann = planet(a,e, omega = ang_win*180/np.pi+180, t0=-ang_win-t_win*n)
-        Hohmann.recalc_orbit_visu(t_win,t_arrival)
-        # plot results
-        plot_planets([Kerbin, Eve, Hohmann])
+        a,e,n,t_h = calc_hohmann(src_orbit, dest_orbit, t_win)
+        ang_win,r = src_orbit.calc_polar(t_win)
+        Hohmann = orbit(a,e, omega = ang_win*180/np.pi+180, t0=-ang_win-t_win*n)
         print(t_miss)
-# %%
+    
+    # Prepare output
+    Hohmann.t_win = t_win
+    Hohmann.recalc_orbit_visu(t_win,t_arrival)
+    return Hohmann
+# %% 
+# Testing during development
+if __name__ == "__main__":
+    #Moho = orbit(a=5263138304, e=0.2, omega=70)
+    Eve = orbit(a=9832684544, e=0.01, omega=15)
+    Kerbin = orbit(a=13599840256, e=0)
+    Duna = orbit(a=20726155264, e=0.051, omega=135.5)
+    
+    # Hohmann = calc_window(Kerbin, Eve, 0)    
+    plot_orbits([Kerbin, Eve, calc_window(Kerbin, Eve, 0)])
+    plot_orbits([Kerbin, Duna, calc_window(Kerbin, Duna, 0)])
+    
