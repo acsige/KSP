@@ -94,13 +94,13 @@ def plot_orbits(orbit_list):
     ax.clear()
     for p in orbit_list:
         ax.plot(p.phi, p.r)
-    t_win = orbit_list[2].t_win
-    t_arrival = t_win + orbit_list[2].T/2
+    t_launch = orbit_list[2].t_launch
+    t_arrival = t_launch + orbit_list[2].T/2
 
-    ax.plot(orbit_list[0].calc_polar(t_win)[0],orbit_list[0].calc_polar(t_win)[1], 'o', label="Launch")
-    ax.plot(orbit_list[1].calc_polar(t_win)[0],orbit_list[1].calc_polar(t_win)[1], 'o', label="Dest at launch")
+    ax.plot(orbit_list[0].calc_polar(t_launch)[0],orbit_list[0].calc_polar(t_launch)[1], 'o', label="Launch")
+    ax.plot(orbit_list[1].calc_polar(t_launch)[0],orbit_list[1].calc_polar(t_launch)[1], 'o', label="Dest at launch")
     ax.plot(orbit_list[1].calc_polar(t_arrival)[0],orbit_list[1].calc_polar(t_arrival)[1], 'o', label="Arrival")
-    ax.plot(orbit_list[2].calc_polar(t_win)[0],orbit_list[2].calc_polar(t_win)[1], 'x', label="Hohmann launch")
+    ax.plot(orbit_list[2].calc_polar(t_launch)[0],orbit_list[2].calc_polar(t_launch)[1], 'x', label="Hohmann launch")
     ax.plot(orbit_list[2].calc_polar(t_arrival)[0],orbit_list[2].calc_polar(t_arrival)[1], 'x', label="Hohmann arrival")
     
     ax.set_rticks([0.5, 1, 1.5, 2])  # Less radial ticks
@@ -121,37 +121,43 @@ def calc_window(src_orbit, dest_orbit, t0):
     if d_ang_0 > d_ang:
         d_ang = d_ang + 2*np.pi
     # time until next position
-    # delta_ang0 + (Eve.n - Kerbin.n) * t_window = delta_ang
-    t_win = t0 + (d_ang - d_ang_0) / (dest_orbit.n - src_orbit.n)
-    t_arrival = t_win + t_h
-    ang_win,r = src_orbit.calc_polar(t_win)
+    # delta_ang0 + (Eve.n - Kerbin.n) * t_launchdow = delta_ang
+    t_launch = t0 + (d_ang - d_ang_0) / (dest_orbit.n - src_orbit.n)
+    t_arrival = t_launch + t_h
+    ang_win,r = src_orbit.calc_polar(t_launch)
     # TODO: n is an average value, it's just for visuals so might be enough
     # If the dest is on a lower orbit, then the SV starts from the apoapsis of the transfer orbit, 
     # so an offset in its omega parameter is needed
     if src_orbit.a > dest_orbit.a:
         ang_offset = np.pi
+        t0_offset = 0
     else:
         ang_offset = 0
-    Hohmann = orbit(a,e, omega = (ang_win+ang_offset)*180/np.pi, t0=-ang_win-t_win*n)
-    Hohmann.t_win = t_win
+        t0_offset =  0
+
+    Hohmann = orbit(a,e, omega = (ang_win+ang_offset)*180/np.pi, t0=-ang_win-t_launch*n)
+    Hohmann.t_launch = t_launch
+    
+    Eve = orbit(a=9832684544, e=0.01, omega=15)
+    Kerbin = orbit(a=13599840256, e=0)
+    plot_orbits([Kerbin, Eve, Hohmann])
 
     # Real iteration
     for i in range(9):
         # calculate timing error - by how much time we've missed the target when arriving
-        t_arrival = t_win + t_h
+        t_arrival = t_launch + t_h
         t_miss = (Hohmann.calc_polar(t_arrival)[0] - dest_orbit.calc_polar(t_arrival)[0])/dest_orbit.n
         # modify start time using calculated error
-        t_win = t_win + t_miss
+        t_launch = t_launch + t_miss
         # recalculate transfer orbit
-        a,e,n,t_h = calc_hohmann(src_orbit, dest_orbit, t_win)
-        ang_win,r = src_orbit.calc_polar(t_win)
-        Hohmann = orbit(a,e, omega = (ang_win+ang_offset)*180/np.pi, t0=-ang_win-t_win*n)
-        Hohmann.t_win = t_win
-        # Hohmann = orbit(a,e, omega = ang_win*180/np.pi+ang_offset, t0=-ang_win-t_win*n)
+        a,e,n,t_h = calc_hohmann(src_orbit, dest_orbit, t_launch)
+        ang_win,r = src_orbit.calc_polar(t_launch)
+        Hohmann = orbit(a,e, omega = (ang_win+ang_offset)*180/np.pi, t0=-ang_win-t_launch*n)
+        Hohmann.t_launch = t_launch
         print(t_miss)
     
     # Prepare output
-    Hohmann.recalc_orbit_visu(t_win,t_arrival)
+    Hohmann.recalc_orbit_visu(t_launch,t_arrival)
     return Hohmann
 # %% 
 # Testing during development
