@@ -21,7 +21,7 @@ class orbit:
         self.phi, self.r = self.calc_polar(self.t)
         
     def calc_mean_anomaly(self, time):
-        return time*self.n + self.t0 + self.omega
+        return time*self.n + self.t0
 
     def calc_eccentric_anomaly(self, time):
         """M: mean anomaly, e: eccentricity, E: eccentric anomaly"""
@@ -124,18 +124,16 @@ def calc_window(src_orbit, dest_orbit, t0):
     # delta_ang0 + (Eve.n - Kerbin.n) * t_launchdow = delta_ang
     t_launch = t0 + (d_ang - d_ang_0) / (dest_orbit.n - src_orbit.n)
     t_arrival = t_launch + t_h
-    ang_win,r = src_orbit.calc_polar(t_launch)
+    ang_launch,r = src_orbit.calc_polar(t_launch)
     # TODO: n is an average value, it's just for visuals so might be enough
     # If the dest is on a lower orbit, then the SV starts from the apoapsis of the transfer orbit, 
-    # so an offset in its omega parameter is needed
+    # so a half-orbit offset in its omega parameter and true anomaly is needed.
     if src_orbit.a > dest_orbit.a:
-        ang_offset = np.pi
-        t0_offset = 0
+        ang_offset = pi
     else:
         ang_offset = 0
-        t0_offset =  0
 
-    Hohmann = orbit(a,e, omega = (ang_win+ang_offset)*180/np.pi, t0=-ang_win-t_launch*n)
+    Hohmann = orbit(a,e, omega = (ang_launch+ang_offset)*180/np.pi, t0=ang_offset-t_launch*n)
     Hohmann.t_launch = t_launch
     
     Eve = orbit(a=9832684544, e=0.01, omega=15)
@@ -151,8 +149,8 @@ def calc_window(src_orbit, dest_orbit, t0):
         t_launch = t_launch + t_miss
         # recalculate transfer orbit
         a,e,n,t_h = calc_hohmann(src_orbit, dest_orbit, t_launch)
-        ang_win,r = src_orbit.calc_polar(t_launch)
-        Hohmann = orbit(a,e, omega = (ang_win+ang_offset)*180/np.pi, t0=-ang_win-t_launch*n)
+        ang_launch,r = src_orbit.calc_polar(t_launch)
+        Hohmann = orbit(a,e, omega = (ang_launch+ang_offset)*180/np.pi, t0=ang_offset-t_launch*n)
         Hohmann.t_launch = t_launch
         print(t_miss)
     
