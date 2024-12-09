@@ -1,7 +1,9 @@
 #%%
 import numpy as np
-import matplotlib.pyplot as plt
 from math import sqrt, pi
+import matplotlib.pyplot as plt
+plt.rc("figure", figsize=[12,8])
+plt.rc("font", size=8)
 
 class orbit:
     def __init__(self, a , e, omega=0, t0 = 3.14):
@@ -48,7 +50,7 @@ class orbit:
 
     def recalc_orbit_visu(self, start_time, end_time):
         """function to recalculate orbit for visualization"""
-        self.t = np.linspace(t_win, t_arrival, 50)
+        self.t = np.linspace(start_time, end_time, 50)
         self.phi, self.r = self.calc_polar(self.t)
 
 def calc_hohmann(src_orbit, dst_orbit, t0):
@@ -92,6 +94,9 @@ def plot_orbits(orbit_list):
     ax.clear()
     for p in orbit_list:
         ax.plot(p.phi, p.r)
+    t_win = orbit_list[2].t_win
+    t_arrival = t_win + orbit_list[2].T/2
+
     ax.plot(orbit_list[0].calc_polar(t_win)[0],orbit_list[0].calc_polar(t_win)[1], 'o', label="Launch")
     ax.plot(orbit_list[1].calc_polar(t_win)[0],orbit_list[1].calc_polar(t_win)[1], 'o', label="Dest at launch")
     ax.plot(orbit_list[1].calc_polar(t_arrival)[0],orbit_list[1].calc_polar(t_arrival)[1], 'o', label="Arrival")
@@ -111,6 +116,7 @@ def calc_window(src_orbit, dest_orbit, t0):
     a,e,n,t_h = calc_hohmann(src_orbit, dest_orbit, t0)
     # Angle difference at ideal launch time, calculated with transfer time
     d_ang = np.pi - t_h*dest_orbit.n
+    # TODO: It's only true if going in!
     # If the target is already past the position, the next opportunity must be searched
     if d_ang_0 > d_ang:
         d_ang = d_ang + 2*np.pi
@@ -120,7 +126,14 @@ def calc_window(src_orbit, dest_orbit, t0):
     t_arrival = t_win + t_h
     ang_win,r = src_orbit.calc_polar(t_win)
     # TODO: n is an average value, it's just for visuals so might be enough
-    Hohmann = orbit(a,e, omega = ang_win*180/np.pi+180, t0=-ang_win-t_win*n)
+    # If the dest is on a lower orbit, then the SV starts from the apoapsis of the transfer orbit, 
+    # so an offset in its omega parameter is needed
+    if src_orbit.a > dest_orbit.a:
+        ang_offset = np.pi
+    else:
+        ang_offset = 0
+    Hohmann = orbit(a,e, omega = (ang_win+ang_offset)*180/np.pi, t0=-ang_win-t_win*n)
+    Hohmann.t_win = t_win
 
     # Real iteration
     for i in range(9):
@@ -132,11 +145,12 @@ def calc_window(src_orbit, dest_orbit, t0):
         # recalculate transfer orbit
         a,e,n,t_h = calc_hohmann(src_orbit, dest_orbit, t_win)
         ang_win,r = src_orbit.calc_polar(t_win)
-        Hohmann = orbit(a,e, omega = ang_win*180/np.pi+180, t0=-ang_win-t_win*n)
+        Hohmann = orbit(a,e, omega = (ang_win+ang_offset)*180/np.pi, t0=-ang_win-t_win*n)
+        Hohmann.t_win = t_win
+        # Hohmann = orbit(a,e, omega = ang_win*180/np.pi+ang_offset, t0=-ang_win-t_win*n)
         print(t_miss)
     
     # Prepare output
-    Hohmann.t_win = t_win
     Hohmann.recalc_orbit_visu(t_win,t_arrival)
     return Hohmann
 # %% 
@@ -149,5 +163,8 @@ if __name__ == "__main__":
     
     # Hohmann = calc_window(Kerbin, Eve, 0)    
     plot_orbits([Kerbin, Eve, calc_window(Kerbin, Eve, 0)])
-    plot_orbits([Kerbin, Duna, calc_window(Kerbin, Duna, 0)])
-    
+    # plot_orbits([Kerbin, Duna, calc_window(Kerbin, Duna, 0)])
+
+# %%
+
+# %%
