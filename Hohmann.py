@@ -116,16 +116,14 @@ def calc_window(src_orbit, dest_orbit, t0):
     a,e,n,t_h = calc_hohmann(src_orbit, dest_orbit, t0)
     # Angle difference at ideal launch time, calculated with transfer time
     d_ang = np.pi - t_h*dest_orbit.n
-    # TODO: It's only true if going in!
     # If the target is already past the position, the next opportunity must be searched
     if d_ang_0 > d_ang:
         d_ang = d_ang + 2*np.pi
     # time until next position
     # delta_ang0 + (Eve.n - Kerbin.n) * t_launchdow = delta_ang
-    t_launch = t0 + (d_ang - d_ang_0) / (dest_orbit.n - src_orbit.n)
+    t_launch = t0 + (d_ang - d_ang_0) / abs(dest_orbit.n - src_orbit.n)
     t_arrival = t_launch + t_h
     ang_launch,r = src_orbit.calc_polar(t_launch)
-    # TODO: n is an average value, it's just for visuals so might be enough
     # If the dest is on a lower orbit, then the SV starts from the apoapsis of the transfer orbit, 
     # so a half-orbit offset in its omega parameter and true anomaly is needed.
     if src_orbit.a > dest_orbit.a:
@@ -136,9 +134,7 @@ def calc_window(src_orbit, dest_orbit, t0):
     Hohmann = orbit(a,e, omega = (ang_launch+ang_offset)*180/np.pi, t0=ang_offset-t_launch*n)
     Hohmann.t_launch = t_launch
     
-    Eve = orbit(a=9832684544, e=0.01, omega=15)
-    Kerbin = orbit(a=13599840256, e=0)
-    plot_orbits([Kerbin, Eve, Hohmann])
+    plot_orbits([src_orbit, dest_orbit, Hohmann])
 
     # Real iteration
     for i in range(9):
@@ -146,16 +142,22 @@ def calc_window(src_orbit, dest_orbit, t0):
         t_arrival = t_launch + t_h
         t_miss = (Hohmann.calc_polar(t_arrival)[0] - dest_orbit.calc_polar(t_arrival)[0])/dest_orbit.n
         # modify start time using calculated error
-        t_launch = t_launch + t_miss
+        # sign depends on relation of angular velocities of the src and dest orbits
+        if src_orbit.a > dest_orbit.a:
+            t_launch = t_launch + t_miss
+        else:
+            t_launch = t_launch - t_miss
+
+        
         # recalculate transfer orbit
         a,e,n,t_h = calc_hohmann(src_orbit, dest_orbit, t_launch)
         ang_launch,r = src_orbit.calc_polar(t_launch)
         Hohmann = orbit(a,e, omega = (ang_launch+ang_offset)*180/np.pi, t0=ang_offset-t_launch*n)
         Hohmann.t_launch = t_launch
-        print(t_miss)
     
     # Prepare output
     Hohmann.recalc_orbit_visu(t_launch,t_arrival)
+    print("{0:.1f} s, {1:.2f} d".format(t_launch, t_launch/3600/6))
     return Hohmann
 # %% 
 # Testing during development
@@ -165,9 +167,8 @@ if __name__ == "__main__":
     Kerbin = orbit(a=13599840256, e=0)
     Duna = orbit(a=20726155264, e=0.051, omega=135.5)
     
-    # Hohmann = calc_window(Kerbin, Eve, 0)    
     plot_orbits([Kerbin, Eve, calc_window(Kerbin, Eve, 0)])
-    # plot_orbits([Kerbin, Duna, calc_window(Kerbin, Duna, 0)])
+    plot_orbits([Kerbin, Duna, calc_window(Kerbin, Duna, 0)])
 
 # %%
 
