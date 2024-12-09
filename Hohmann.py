@@ -134,10 +134,10 @@ def calc_window(src_orbit, dest_orbit, t0):
     Hohmann = orbit(a,e, omega = (ang_launch+ang_offset)*180/np.pi, t0=ang_offset-t_launch*n)
     Hohmann.t_launch = t_launch
     
-    plot_orbits([src_orbit, dest_orbit, Hohmann])
-
+    # initial value for the while loop
+    t_miss = 1000
     # Real iteration
-    for i in range(9):
+    while abs(t_miss) > 100:
         # calculate timing error - by how much time we've missed the target when arriving
         t_arrival = t_launch + t_h
         t_miss = (Hohmann.calc_polar(t_arrival)[0] - dest_orbit.calc_polar(t_arrival)[0])/dest_orbit.n
