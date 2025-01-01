@@ -3,8 +3,9 @@ import numpy as np
 class star:
     def __init__(self, GM):
         self.GM = GM
-
 Kerbol = star(1.1723328e18)
+
+#__all__ = ['star', 'body', 'orbit', 'Kerbol']
 
 class body:
     """Planets, moons, spacecrafts, etc."""
@@ -25,9 +26,8 @@ class orbit:
         self.omega = omega # argument of periapsis
         self.t0 = t0 # epoch
         self.central_body = central_body
-        self.GM = central_body.GM
 
-        self.T = np.sqrt(4*np.pi**2*a**3/self.GM) # orbital period, seconds
+        self.T = np.sqrt(4*np.pi**2*a**3/self.central_body.GM) # orbital period, seconds
         self.n = 2*np.pi/self.T # angular velocity, rad/s
         # calculate orbit for visualization
         self.t = np.linspace(0, self.T, 100)
@@ -59,6 +59,7 @@ class orbit:
         nu = self.calc_true_anomaly(time)
         phi = self.omega + nu
         r = self.a*(1-self.e*self.e)/(1+self.e*np.cos(nu))
+        phi = np.mod(phi, 2*np.pi)
         return phi,r
 
     def recalc_orbit_visu(self, start_time, end_time):

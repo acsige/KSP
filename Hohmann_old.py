@@ -5,16 +5,59 @@ import matplotlib.pyplot as plt
 plt.rc("figure", figsize=[12,8])
 plt.rc("font", size=8)
 
-from KSP_module import orbit, Kerbol, body
+class orbit:
+    def __init__(self, a , e, omega=0, t0 = 3.14):
+        GM = 1.1723328e18 #Kerbol
+        self.a = a # semi-major axis
+        self.e = e # eccentricity 
+        # longitude of ascending node, degrees converted to rad
+        # argument of periapsis is 0, so periapsis is in the same position wrt reference angle
+        self.omega = omega*np.pi/180 
+        self.t0 = t0 # epoch
+        self.T = sqrt(4*pi**2*a**3/GM) # orbital period, seconds
+        self.n = 2*np.pi/self.T # angular velocity, rad/s
+        # calculate orbit for visualization
+        self.t = np.linspace(0, self.T, 100)
+        self.phi, self.r = self.calc_polar(self.t)
+        
+    def calc_mean_anomaly(self, time):
+        return time*self.n + self.t0
 
-#%%
+    def calc_eccentric_anomaly(self, time):
+        """M: mean anomaly, e: eccentricity, E: eccentric anomaly"""
+        def f(E,M,e): return E - e*np.sin(E) - M
+        def dfdE(E,M,e): return 1 - e*np.cos(E)
+        M = self.calc_mean_anomaly(time)
+        E = M  # initial guess
+        max_delta = 1 # initial error
+        while max_delta > 1e-9:
+            E_old = E
+            E = E - f(E,M,self.e)/dfdE(E,M,self.e)
+            max_delta = np.max(np.abs(E_old - E))
+        return E
+
+    def calc_true_anomaly(self, time):
+        E = self.calc_eccentric_anomaly(time)
+        beta = self.e/(1+sqrt(1-self.e*self.e))
+        return E + 2*np.arctan( beta*np.sin(E) / (1-beta*np.cos(E)) )
+
+    def calc_polar(self, time):
+        """function to calculate both orbital distance and angle wrt reference angle"""
+        nu = self.calc_true_anomaly(time)
+        phi = self.omega + nu
+        r = self.a*(1-self.e*self.e)/(1+self.e*np.cos(nu))
+        return phi,r
+
+    def recalc_orbit_visu(self, start_time, end_time):
+        """function to recalculate orbit for visualization"""
+        self.t = np.linspace(start_time, end_time, 50)
+        self.phi, self.r = self.calc_polar(self.t)
+
 def calc_hohmann(src_orbit, dst_orbit, t0):
     """
     Calculate semi-major axis, eccentricity, average angular velocity and time for Hohmann transfer.
     """
-    assert(src_orbit.central_body == dst_orbit.central_body)
-    central_body = src_orbit.central_body
-    GM = central_body.GM
+    GM = 1.1723328e18 #Kerbol grav const
 
     # position of src known at t0
     phi, r_src = src_orbit.calc_polar(t0)
@@ -29,8 +72,8 @@ def calc_hohmann(src_orbit, dst_orbit, t0):
         # semi-major axis
         a = (r_src + r_dst) / 2
         # Time of Hohmann transfer is half of the Hohmann orbit
-        r_avg = 2*a/pi
-        hohmann_period_sq = 4*pi**2*a**3/GM
+        r_avg = 2*a/np.pi
+        hohmann_period_sq = 4*np.pi**2*a**3/GM
         hohmann_time_prev = hohmann_time
         hohmann_time = sqrt(hohmann_period_sq) / 2    
         
@@ -41,7 +84,7 @@ def calc_hohmann(src_orbit, dst_orbit, t0):
         e = 1 - 2/(r_dst/r_src + 1)
 
     # average angular velocity
-    n = pi/hohmann_time
+    n = np.pi/hohmann_time
     
     return a,e,n,hohmann_time
 
@@ -65,32 +108,30 @@ def plot_orbits(orbit_list):
     ax.grid(True)
     ax.legend(loc=1)
 
-def calc_window(src_orbit, dst_orbit, t0):
+def calc_window(src_orbit, dest_orbit, t0):
     # angle difference at zero time
-    d_ang_0 = dst_orbit.calc_mean_anomaly(t0) - src_orbit.calc_mean_anomaly(t0)
-    assert(src_orbit.central_body == dst_orbit.central_body)
-    central_body = src_orbit.central_body
-
+    d_ang_0 = dest_orbit.calc_mean_anomaly(t0) - src_orbit.calc_mean_anomaly(t0)
+    
     # First iteration
-    a,e,n,t_h = calc_hohmann(src_orbit, dst_orbit, t0)
+    a,e,n,t_h = calc_hohmann(src_orbit, dest_orbit, t0)
     # Angle difference at ideal launch time, calculated with transfer time
-    d_ang = pi - t_h*dst_orbit.n
+    d_ang = np.pi - t_h*dest_orbit.n
     # If the target is already past the position, the next opportunity must be searched
     if d_ang_0 > d_ang:
-        d_ang = d_ang + 2*pi
+        d_ang = d_ang + 2*np.pi
     # time until next position
     # delta_ang0 + (Eve.n - Kerbin.n) * t_launchdow = delta_ang
-    t_launch = t0 + (d_ang - d_ang_0) / abs(dst_orbit.n - src_orbit.n)
+    t_launch = t0 + (d_ang - d_ang_0) / abs(dest_orbit.n - src_orbit.n)
     t_arrival = t_launch + t_h
     ang_launch,r = src_orbit.calc_polar(t_launch)
     # If the dest is on a lower orbit, then the SV starts from the apoapsis of the transfer orbit, 
     # so a half-orbit offset in its omega parameter and true anomaly is needed.
-    if src_orbit.a > dst_orbit.a:
+    if src_orbit.a > dest_orbit.a:
         ang_offset = pi
     else:
         ang_offset = 0
 
-    Hohmann = orbit(central_body, a,e, omega = (ang_launch+ang_offset)*180/pi, t0=ang_offset-t_launch*n)
+    Hohmann = orbit(a,e, omega = (ang_launch+ang_offset)*180/np.pi, t0=ang_offset-t_launch*n)
     Hohmann.t_launch = t_launch
     
     # initial value for the while loop
@@ -99,18 +140,19 @@ def calc_window(src_orbit, dst_orbit, t0):
     while abs(t_miss) > 100:
         # calculate timing error - by how much time we've missed the target when arriving
         t_arrival = t_launch + t_h
-        t_miss = (Hohmann.calc_polar(t_arrival)[0] - dst_orbit.calc_polar(t_arrival)[0])/dst_orbit.n
+        t_miss = (Hohmann.calc_polar(t_arrival)[0] - dest_orbit.calc_polar(t_arrival)[0])/dest_orbit.n
         # modify start time using calculated error
         # sign depends on relation of angular velocities of the src and dest orbits
-        if src_orbit.a > dst_orbit.a:
+        if src_orbit.a > dest_orbit.a:
             t_launch = t_launch + t_miss
         else:
             t_launch = t_launch - t_miss
+
         
         # recalculate transfer orbit
-        a,e,n,t_h = calc_hohmann(src_orbit, dst_orbit, t_launch)
+        a,e,n,t_h = calc_hohmann(src_orbit, dest_orbit, t_launch)
         ang_launch,r = src_orbit.calc_polar(t_launch)
-        Hohmann = orbit(central_body, a,e, omega = (ang_launch+ang_offset)*180/pi, t0=ang_offset-t_launch*n)
+        Hohmann = orbit(a,e, omega = (ang_launch+ang_offset)*180/np.pi, t0=ang_offset-t_launch*n)
         Hohmann.t_launch = t_launch
     
     # Prepare output
@@ -121,9 +163,9 @@ def calc_window(src_orbit, dst_orbit, t0):
 # Testing during development
 if __name__ == "__main__":
     #Moho = orbit(a=5263138304, e=0.2, omega=70)
-    Eve = orbit(Kerbol, a=9832684544, e=0.01, omega=15)
-    Kerbin = orbit(Kerbol, a=13599840256, e=0)
-    Duna = orbit(Kerbol, a=20726155264, e=0.051, omega=135.5)
+    Eve = orbit(a=9832684544, e=0.01, omega=15)
+    Kerbin = orbit(a=13599840256, e=0)
+    Duna = orbit(a=20726155264, e=0.051, omega=135.5)
     
     plot_orbits([Kerbin, Eve, calc_window(Kerbin, Eve, 0)])
     plot_orbits([Kerbin, Duna, calc_window(Kerbin, Duna, 0)])
