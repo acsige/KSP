@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 plt.rc("figure", figsize=[12,8])
 plt.rc("font", size=8)
 
-from KSP_module import orbit, Kerbol, body
+from KSP_module import orbit, planet, Kerbol
 
 #%%
 def calc_hohmann(src_orbit, dst_orbit, t0):
@@ -123,12 +123,12 @@ def calc_window(src_orbit, dst_orbit, t0):
 # Testing during development
 if __name__ == "__main__":
     #Moho = orbit(a=5263138304, e=0.2, omega=70)
-    Eve = orbit(Kerbol, a=9832684544, e=0.01, omega=15)
-    Kerbin = orbit(Kerbol, a=13599840256, e=0)
-    Duna = orbit(Kerbol, a=20726155264, e=0.051, omega=135.5)
+    Eve = planet(orbit(Kerbol, a=9832684544, e=0.01, omega=15), GM=8.1717302e12, radius=7e5)
+    Kerbin = planet(orbit(Kerbol, a=13599840256, e=0), GM=3.5316e12, radius=6e5)
+    Duna = planet(orbit(Kerbol, a=20726155264, e=0.051, omega=135.5), GM=3.0136321e11, radius=3.2e5)
     
-    plot_orbits([Kerbin, Eve, calc_window(Kerbin, Eve, 0)])
-    plot_orbits([Kerbin, Duna, calc_window(Kerbin, Duna, 0)])
+    plot_orbits([Kerbin.orbit, Eve.orbit, calc_window(Kerbin.orbit, Eve.orbit, 0)])
+    plot_orbits([Kerbin.orbit, Duna.orbit, calc_window(Kerbin.orbit, Duna.orbit, 0)])
 
 # %%
 

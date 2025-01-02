@@ -5,13 +5,17 @@ class star:
         self.GM = GM
 Kerbol = star(1.1723328e18)
 
-#__all__ = ['star', 'body', 'orbit', 'Kerbol']
-
 class body:
     """Planets, moons, spacecrafts, etc."""
     def __init__(self, orbit):
         self.central_body = orbit.central_body
         self.orbit = orbit
+
+class planet(body):
+    def __init__(self, orbit, GM, radius=0):
+        super().__init__(orbit)
+        self.GM = GM
+        self.radius = radius
 
 class orbit:
     """Default orbit is the circular orbit of Kerbin around Kerbol"""
