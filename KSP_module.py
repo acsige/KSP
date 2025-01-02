@@ -23,7 +23,7 @@ class orbit:
                  t0=3.14):
         self.a = a # semi-major axis
         self.e = e # eccentricity
-        self.omega = omega # argument of periapsis
+        self.omega = omega*np.pi/180 # argument of periapsis
         self.t0 = t0 # epoch
         self.central_body = central_body
 
@@ -59,7 +59,6 @@ class orbit:
         nu = self.calc_true_anomaly(time)
         phi = self.omega + nu
         r = self.a*(1-self.e*self.e)/(1+self.e*np.cos(nu))
-        phi = np.mod(phi, 2*np.pi)
         return phi,r
 
     def recalc_orbit_visu(self, start_time, end_time):

@@ -99,7 +99,9 @@ def calc_window(src_orbit, dst_orbit, t0):
     while abs(t_miss) > 100:
         # calculate timing error - by how much time we've missed the target when arriving
         t_arrival = t_launch + t_h
-        t_miss = (Hohmann.calc_polar(t_arrival)[0] - dst_orbit.calc_polar(t_arrival)[0])/dst_orbit.n
+        ang_h = np.mod(Hohmann.calc_polar(t_arrival)[0], 2*np.pi)
+        ang_dst = np.mod(dst_orbit.calc_polar(t_arrival)[0], 2*np.pi)
+        t_miss = (ang_h - ang_dst)/dst_orbit.n
         # modify start time using calculated error
         # sign depends on relation of angular velocities of the src and dest orbits
         if src_orbit.a > dst_orbit.a:
