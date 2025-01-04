@@ -8,19 +8,23 @@ Kerbol = star(1.1723328e18)
 class body:
     """Planets, moons, spacecrafts, etc."""
     def __init__(self, orbit):
-        self.central_body = orbit.central_body
+        self.primary = orbit.primary
         self.orbit = orbit
 
-class planet(body):
+
+class planetary_body(body):
     def __init__(self, orbit, GM, radius=0):
         super().__init__(orbit)
         self.GM = GM
         self.radius = radius
 
+    def calc_orbital_velocity(self, altitude):
+        return np.sqrt(self.GM/(self.radius + altitude))
+    
 class orbit:
     """Default orbit is the circular orbit of Kerbin around Kerbol"""
     def __init__(self, 
-                 central_body=Kerbol, 
+                 primary=Kerbol, 
                  a=13599840256, 
                  e=0,
                  omega=0,
@@ -29,9 +33,9 @@ class orbit:
         self.e = e # eccentricity
         self.omega = omega*np.pi/180 # argument of periapsis
         self.t0 = t0 # epoch
-        self.central_body = central_body
+        self.primary = primary
 
-        self.T = np.sqrt(4*np.pi**2*a**3/self.central_body.GM) # orbital period, seconds
+        self.T = np.sqrt(4*np.pi**2*a**3/self.primary.GM) # orbital period, seconds
         self.n = 2*np.pi/self.T # angular velocity, rad/s
         # calculate orbit for visualization
         self.t = np.linspace(0, self.T, 100)

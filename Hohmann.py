@@ -5,16 +5,16 @@ import matplotlib.pyplot as plt
 plt.rc("figure", figsize=[12,8])
 plt.rc("font", size=8)
 
-from KSP_module import orbit, planet, Kerbol
+from KSP_module import orbit, planetary_body, Kerbol
 
 #%%
 def calc_hohmann(src_orbit, dst_orbit, t0):
     """
     Calculate semi-major axis, eccentricity, average angular velocity and time for Hohmann transfer.
     """
-    assert(src_orbit.central_body == dst_orbit.central_body)
-    central_body = src_orbit.central_body
-    GM = central_body.GM
+    assert(src_orbit.primary == dst_orbit.primary)
+    primary = src_orbit.primary
+    GM = primary.GM
 
     # position of src known at t0
     phi, r_src = src_orbit.calc_polar(t0)
@@ -68,8 +68,8 @@ def plot_orbits(orbit_list):
 def calc_window(src_orbit, dst_orbit, t0):
     # angle difference at zero time
     d_ang_0 = dst_orbit.calc_mean_anomaly(t0) - src_orbit.calc_mean_anomaly(t0)
-    assert(src_orbit.central_body == dst_orbit.central_body)
-    central_body = src_orbit.central_body
+    assert(src_orbit.primary == dst_orbit.primary)
+    primary = src_orbit.primary
 
     # First iteration
     a,e,n,t_h = calc_hohmann(src_orbit, dst_orbit, t0)
@@ -90,7 +90,7 @@ def calc_window(src_orbit, dst_orbit, t0):
     else:
         ang_offset = 0
 
-    Hohmann = orbit(central_body, a,e, omega = (ang_launch+ang_offset)*180/pi, t0=ang_offset-t_launch*n)
+    Hohmann = orbit(primary, a,e, omega = (ang_launch+ang_offset)*180/pi, t0=ang_offset-t_launch*n)
     Hohmann.t_launch = t_launch
     
     # initial value for the while loop
@@ -112,7 +112,7 @@ def calc_window(src_orbit, dst_orbit, t0):
         # recalculate transfer orbit
         a,e,n,t_h = calc_hohmann(src_orbit, dst_orbit, t_launch)
         ang_launch,r = src_orbit.calc_polar(t_launch)
-        Hohmann = orbit(central_body, a,e, omega = (ang_launch+ang_offset)*180/pi, t0=ang_offset-t_launch*n)
+        Hohmann = orbit(primary, a,e, omega = (ang_launch+ang_offset)*180/pi, t0=ang_offset-t_launch*n)
         Hohmann.t_launch = t_launch
     
     # Prepare output
@@ -123,9 +123,9 @@ def calc_window(src_orbit, dst_orbit, t0):
 # Testing during development
 if __name__ == "__main__":
     #Moho = orbit(a=5263138304, e=0.2, omega=70)
-    Eve = planet(orbit(Kerbol, a=9832684544, e=0.01, omega=15), GM=8.1717302e12, radius=7e5)
-    Kerbin = planet(orbit(Kerbol, a=13599840256, e=0), GM=3.5316e12, radius=6e5)
-    Duna = planet(orbit(Kerbol, a=20726155264, e=0.051, omega=135.5), GM=3.0136321e11, radius=3.2e5)
+    Eve = planetary_body(orbit(Kerbol, a=9832684544, e=0.01, omega=15), GM=8.1717302e12, radius=7e5)
+    Kerbin = planetary_body(orbit(Kerbol, a=13599840256, e=0), GM=3.5316e12, radius=6e5)
+    Duna = planetary_body(orbit(Kerbol, a=20726155264, e=0.051, omega=135.5), GM=3.0136321e11, radius=3.2e5)
     
     plot_orbits([Kerbin.orbit, Eve.orbit, calc_window(Kerbin.orbit, Eve.orbit, 0)])
     plot_orbits([Kerbin.orbit, Duna.orbit, calc_window(Kerbin.orbit, Duna.orbit, 0)])
