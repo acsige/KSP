@@ -123,10 +123,15 @@ def calc_window(src_orbit, dst_orbit, t0):
 # Testing during development
 if __name__ == "__main__":
     #Moho = orbit(a=5263138304, e=0.2, omega=70)
-    Eve = planetary_body(orbit(Kerbol, a=9832684544, e=0.01, omega=15), GM=8.1717302e12, radius=7e5)
-    Kerbin = planetary_body(orbit(Kerbol, a=13599840256, e=0), GM=3.5316e12, radius=6e5)
-    Duna = planetary_body(orbit(Kerbol, a=20726155264, e=0.051, omega=135.5), GM=3.0136321e11, radius=3.2e5)
-    
+    Eve = planetary_body(orbit(Kerbol, a=9832684544, e=0.01, omega=15, i=2.1),
+                        GM=8.1717302e12, radius=7e5, atmo_height=9e4)
+    Kerbin = planetary_body(orbit(Kerbol, a=13599840256, e=0),
+                            GM=3.5316e12, radius=6e5, atmo_height=7e4)
+    Duna = planetary_body(orbit(Kerbol, a=20726155264, e=0.051, omega=135.5, i=0.06),
+                          GM=3.0136321e11, radius=3.2e5, atmo_height=5e4)
+    Mun = planetary_body(orbit(Kerbin, a=1.2e6, e=0, t0=1.7),
+                         GM=6.5138398e10, radius=2e5, atmo_height=0)
+
     plot_orbits([Kerbin.orbit, Eve.orbit, calc_window(Kerbin.orbit, Eve.orbit, 0)])
     plot_orbits([Kerbin.orbit, Duna.orbit, calc_window(Kerbin.orbit, Duna.orbit, 0)])
 

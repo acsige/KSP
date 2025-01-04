@@ -13,13 +13,17 @@ class body:
 
 
 class planetary_body(body):
-    def __init__(self, orbit, GM, radius=0):
+    def __init__(self, orbit, GM, radius=0, atmo_height=0):
         super().__init__(orbit)
         self.GM = GM
         self.radius = radius
+        self.atmo_height = atmo_height
 
     def calc_orbital_velocity(self, altitude):
-        return np.sqrt(self.GM/(self.radius + altitude))
+        if altitude > self.atmo_height:
+            return np.sqrt(self.GM/(self.radius + self.atmo_height))
+        else:
+            raise ValueError("Altitude is inside atmosphere")
     
 class orbit:
     """Default orbit is the circular orbit of Kerbin around Kerbol"""
