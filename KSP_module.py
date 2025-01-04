@@ -31,11 +31,13 @@ class orbit:
                  primary=Kerbol, 
                  a=13599840256, 
                  e=0,
+                 i=0,
                  omega=0,
                  t0=3.14):
         self.a = a # semi-major axis
         self.e = e # eccentricity
-        self.omega = omega*np.pi/180 # argument of periapsis
+        self.i = i*np.pi/180 # inclination in radians
+        self.omega = omega*np.pi/180 # argument of periapsis in radians
         self.t0 = t0 # epoch
         self.primary = primary
 
