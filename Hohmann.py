@@ -136,5 +136,15 @@ if __name__ == "__main__":
     plot_orbits([Kerbin.orbit, Duna.orbit, calc_window(Kerbin.orbit, Duna.orbit, 0)])
 
 # %%
-
+# shifted orbit calculation
+T_sh = (5/6)*Kerbin.orbit.T
+ra_sh = Kerbin.orbit.a
+a_sh = (T_sh**2*Kerbin.primary.GM/(4*np.pi**2))**(1/3)
+e_sh = ra_sh/a_sh - 1
+# %%
+print(T_sh/(3600*6)/2)
+# %%
+sh_orbit = orbit(Kerbol, a_sh, e_sh, t0=0)
+# %%
+sh_orbit.calc_circularization_ap()
 # %%

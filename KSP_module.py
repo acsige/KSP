@@ -40,6 +40,10 @@ class orbit:
         self.omega = omega*np.pi/180 # argument of periapsis in radians
         self.t0 = t0 # epoch
         self.primary = primary
+        self.rp = a*(1-e) # periapsis
+        self.ra = a*(1+e) # apoapsis
+        self.vp = np.sqrt(primary.GM*(1+self.e)/(self.a*(1-self.e))) # velocity at periapsis
+        self.va = np.sqrt(primary.GM*(1-self.e)/(self.a*(1+self.e))) # velocity at apoapsis
 
         self.T = np.sqrt(4*np.pi**2*a**3/self.primary.GM) # orbital period, seconds
         self.n = 2*np.pi/self.T # angular velocity, rad/s
@@ -79,3 +83,19 @@ class orbit:
         """function to recalculate orbit for visualization"""
         self.t = np.linspace(start_time, end_time, 50)
         self.phi, self.r = self.calc_polar(self.t)
+
+    def calc_speed_at(self, time):
+        r = self.calc_polar(time)[1]
+        return r*self.n
+    
+    def calc_circularization_ap(self):
+        """Calculate the delta-v needed for circularization burn at apoapsis""" 
+        v_target = np.sqrt(self.primary.GM/self.ra)
+        return v_target - self.va
+
+    def calc_circularization_pe(self):
+        """Calculate the delta-v needed for circularization burn at periapsis""" 
+        v_target = np.sqrt(self.primary.GM/self.rp)
+        return self.vp - v_target
+    
+    
