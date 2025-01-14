@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 plt.rc("figure", figsize=[12,8])
 plt.rc("font", size=8)
 
-from KSP_module import orbit, planetary_body, Kerbol
+from KSP_module import orbit, planetary_body, Kerbol, calc_orbit
 
 #%%
 def calc_hohmann(src_orbit, dst_orbit, t0):
@@ -137,14 +137,45 @@ if __name__ == "__main__":
 
 # %%
 # shifted orbit calculation
-T_sh = (5/6)*Kerbin.orbit.T
-ra_sh = Kerbin.orbit.a
+# T_sh = (5/6)*Kerbin.orbit.T
+T_sh = (7/6)*Kerbin.orbit.T
+rp_sh = Kerbin.orbit.a
 a_sh = (T_sh**2*Kerbin.primary.GM/(4*np.pi**2))**(1/3)
-e_sh = ra_sh/a_sh - 1
+# e_sh = ra_sh/a_sh - 1
+e_sh = 1-rp_sh/a_sh
 # %%
 print(T_sh/(3600*6)/2)
 # %%
 sh_orbit = orbit(Kerbol, a_sh, e_sh, t0=0)
 # %%
 sh_orbit.calc_circularization_ap()
+# %%
+sh_orbit.T/(3600*6)-Kerbin.orbit.T/(3600*6)
+# %%
+def calc_orbit(primary,a=False,e=False,T=False,rp=False,ra=False):
+    """Calculate orbital parameters from given data"""
+
+    if bool(T):
+        a = (T/(2*np.pi))**(2/3)*primary.GM**(1/3)
+    if bool(rp) and bool(ra):
+        a = (rp + ra)/2
+    if bool(rp) and bool(e):
+        a = rp/(1-e)
+    if bool(ra) and bool(e):
+        a = ra/(1+e)
+    
+    if not(isinstance(e, bool)):
+        rp = a*(1-e)
+        ra = a*(1+e)
+
+    if not(isinstance(ra, bool)):
+        rp = a*(1-e)
+
+    if not(isinstance(rp, bool)):
+        ra = a*(1+e)
+
+    return orbit(primary, a, e)
+
+relay_orbit = calc_orbit(Mun,T=3600*6, e=0.0)
+relay_orbit.min_alt
 # %%

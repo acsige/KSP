@@ -45,6 +45,9 @@ class orbit:
         self.vp = np.sqrt(primary.GM*(1+self.e)/(self.a*(1-self.e))) # velocity at periapsis
         self.va = np.sqrt(primary.GM*(1-self.e)/(self.a*(1+self.e))) # velocity at apoapsis
 
+        self.min_alt = self.rp - primary.radius
+        self.max_alt = self.ra - primary.radius
+
         self.T = np.sqrt(4*np.pi**2*a**3/self.primary.GM) # orbital period, seconds
         self.n = 2*np.pi/self.T # angular velocity, rad/s
         # calculate orbit for visualization
@@ -98,4 +101,31 @@ class orbit:
         v_target = np.sqrt(self.primary.GM/self.rp)
         return self.vp - v_target
     
+
+def calc_orbit(primary,a=False,e=False,T=False,rp=False,ra=False):
+    """Calculate orbital parameters from given data"""
+    check_arguments = a+T+rp+ra
+    if not(isinstance(e, bool)): check_arguments += 1
+
+    if check_arguments != 2:
+        raise ValueError("Exactly two arguments are needed")
+    if bool(T):
+        a = (T/(2*np.pi))**(2/3)*primary.GM**(1/3)
+    if bool(rp) and bool(ra):
+        a = (rp + ra)/2
+    if bool(rp) and bool(e):
+        a = rp/(1-e)
+    if bool(ra) and bool(e):
+        a = ra/(1+e)
     
+    if not(isinstance(e, bool)):
+        rp = a*(1-e)
+        ra = a*(1+e)
+
+    if not(isinstance(ra, bool)):
+        rp = a*(1-e)
+
+    if not(isinstance(rp, bool)):
+        ra = a*(1+e)
+
+    return orbit(primary, a, e)
