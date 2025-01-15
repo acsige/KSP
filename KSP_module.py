@@ -1,9 +1,11 @@
 import numpy as np 
 
 class star:
-    def __init__(self, GM):
+    def __init__(self, GM=1.1723328e18, radius=2.616e8):
         self.GM = GM
-Kerbol = star(1.1723328e18)
+        self.radius = radius
+
+Kerbol = star()
 
 class body:
     """Planets, moons, spacecrafts, etc."""
@@ -101,14 +103,9 @@ class orbit:
         v_target = np.sqrt(self.primary.GM/self.rp)
         return self.vp - v_target
     
-
 def calc_orbit(primary,a=False,e=False,T=False,rp=False,ra=False):
     """Calculate orbital parameters from given data"""
-    check_arguments = a+T+rp+ra
-    if not(isinstance(e, bool)): check_arguments += 1
 
-    if check_arguments != 2:
-        raise ValueError("Exactly two arguments are needed")
     if bool(T):
         a = (T/(2*np.pi))**(2/3)*primary.GM**(1/3)
     if bool(rp) and bool(ra):
@@ -123,9 +120,11 @@ def calc_orbit(primary,a=False,e=False,T=False,rp=False,ra=False):
         ra = a*(1+e)
 
     if not(isinstance(ra, bool)):
+        e = ra/a-1
         rp = a*(1-e)
 
     if not(isinstance(rp, bool)):
+        e = 1-rp/a
         ra = a*(1+e)
 
     return orbit(primary, a, e)
