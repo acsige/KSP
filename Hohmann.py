@@ -144,3 +144,7 @@ temporary_orbit.min_alt
 # %%
 temporary_orbit.calc_circularization_pe()
 # %%
+temporary_orbit.min_alt
+# %%
+temporary_orbit.max_alt
+# %%

@@ -20,6 +20,7 @@ class planetary_body(body):
         self.GM = GM
         self.radius = radius
         self.atmo_height = atmo_height
+        self.soi = self.orbit.a*(self.GM/self.primary.GM)**(2/5)
 
     def calc_orbital_velocity(self, altitude):
         if altitude > self.atmo_height:
@@ -89,9 +90,17 @@ class orbit:
         self.t = np.linspace(start_time, end_time, 50)
         self.phi, self.r = self.calc_polar(self.t)
 
-    def calc_speed_at(self, time):
+    def calc_speed(self, time):
         r = self.calc_polar(time)[1]
         return np.sqrt(self.primary.GM*(2/r - 1/self.a))
+    
+    def calc_gamma(self, time):
+        """Calculate the angle between the velocity vector and the radius vector"""
+        r1 = self.calc_polar(time)[1]
+        v1 = self.calc_speed(time)
+        return np.arcsin((self.vp*self.rp)/v1*r1)
+        # nu = self.calc_true_anomaly(time)
+        # return np.arccos(self.e + np.cos(nu))/(1 + self.e*np.cos(nu))
     
     def calc_circularization_ap(self):
         """Calculate the delta-v needed for circularization burn at apoapsis""" 
