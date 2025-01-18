@@ -91,7 +91,7 @@ class orbit:
 
     def calc_speed_at(self, time):
         r = self.calc_polar(time)[1]
-        return r*self.n
+        return np.sqrt(self.primary.GM*(2/r - 1/self.a))
     
     def calc_circularization_ap(self):
         """Calculate the delta-v needed for circularization burn at apoapsis""" 
