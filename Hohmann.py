@@ -140,13 +140,11 @@ if __name__ == "__main__":
 # %%
 relay_orbit = calc_orbit(Minmus,T=3600*9, e=0.0)
 relay_orbit.min_alt
-# %%
 temporary_orbit = calc_orbit(Minmus,T=3600*12, rp=relay_orbit.rp)
 temporary_orbit.min_alt
-# %%
 temporary_orbit.calc_circularization_pe()
 # %%
-temporary_orbit.min_alt
+transfer_orbit = calc_window(Kerbin.orbit, Duna.orbit, 0)
 # %%
-temporary_orbit.max_alt
+transfer_orbit.calc_distance_to(Kerbin, 235.55*6*3600)
 # %%

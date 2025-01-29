@@ -119,7 +119,7 @@ class orbit:
     def calc_xy(self, time):
         """Calculate Cartesian coordinates for a given time"""
         phi,r = self.calc_polar(time)
-        return r*np.cos(phi), r*np.sin(phi)
+        return np.asarray(r*np.cos(phi), r*np.sin(phi))
 
     def calc_distance_to(self, other, time):
         """Calculate distance between two objects at a given time"""
