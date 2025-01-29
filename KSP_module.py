@@ -5,6 +5,10 @@ class star:
         self.GM = GM
         self.radius = radius
 
+    def calc_xy(self, time):
+        """The star is at the origin"""
+        return (0,0)
+
 Kerbol = star()
 
 class body:
@@ -111,6 +115,22 @@ class orbit:
         """Calculate the delta-v needed for circularization burn at periapsis""" 
         v_target = np.sqrt(self.primary.GM/self.rp)
         return self.vp - v_target
+    
+    def calc_xy(self, time):
+        """Calculate Cartesian coordinates for a given time"""
+        phi,r = self.calc_polar(time):
+        return r*np.cos(phi), r*np.sin(phi)
+
+    def calc_distance_to(self, other, time):
+        """Calculate distance between two objects at a given time"""
+        if isinstance(other, orbit):
+            other_orbit = other
+        elif isinstance(other, body) or isinstance(other, planetary_body):
+            other_orbit = other.orbit
+        else:
+            raise(TypeError)
+        
+        return np.linalg.norm(self.calc_xy(time)-other_orbit.calc_xy(time))
     
 def calc_orbit(primary,a=False,e=False,T=False,rp=False,ra=False):
     """Calculate orbital parameters from given data"""
