@@ -1,6 +1,6 @@
 import numpy as np 
 import matplotlib.pyplot as plt
-from math import sqrt, pi
+from math import sqrt, pi, sin, cos, atan
 
 class star:
     def __init__(self, GM=1.1723328e18, radius=2.616e8):
@@ -64,15 +64,19 @@ class orbit:
         self.ra = a*(1+e) # apoapsis
         self.vp = np.sqrt(primary.GM*(1+self.e)/(self.a*(1-self.e))) # velocity at periapsis
         self.va = np.sqrt(primary.GM*(1-self.e)/(self.a*(1+self.e))) # velocity at apoapsis
-
         self.min_alt = self.rp - primary.radius
         self.max_alt = self.ra - primary.radius
-
         self.T = np.sqrt(4*np.pi**2*a**3/self.primary.GM) # orbital period, seconds
         self.n = 2*np.pi/self.T # angular velocity, rad/s
+        self.is_elliptic = self.check_elliptic()
+
         # calculate orbit for visualization
         self.t = np.linspace(0, self.T, 100)
         self.phi, self.r = self.calc_polar(self.t)
+
+    # If the mechanical energy is negative, the orbit is elliptic
+    def check_elliptic(self):
+        return self.vp**2/2-self.primary.GM/self.rp < 0
 
     def calc_mean_anomaly(self, time):
         return time*self.n + self.t0
@@ -111,11 +115,11 @@ class orbit:
         r = self.calc_polar(time)[1]
         return np.sqrt(self.primary.GM*(2/r - 1/self.a))
     
-    def calc_gamma(self, time):
+    def calc_zenith_angle(self, time):
         """Calculate the angle between the velocity vector and the radius vector"""
         r1 = self.calc_polar(time)[1]
         v1 = self.calc_speed(time)
-        return np.arcsin((self.vp*self.rp)/v1*r1)
+        return np.arcsin((self.vp*self.rp) / (v1*r1))
         # nu = self.calc_true_anomaly(time)
         # return np.arccos(self.e + np.cos(nu))/(1 + self.e*np.cos(nu))
     
@@ -142,9 +146,25 @@ class orbit:
             other_orbit = other.orbit
         else:
             raise(TypeError)
-        
         return np.linalg.norm(self.calc_xy(time)-other_orbit.calc_xy(time))
     
+    def do_maneuver(self, time, longitudinal_dv, lateral_dv=0, radial_dv=0):
+        # radius at maneuver
+        phi, r = self.calc_polar(time)
+        # flight path angle at maneuver
+        fphi = pi/2 - self.calc_zenith_angle(time)
+        # original speed at maneuver
+        v = self.calc_speed(time)
+        # add the three components
+        v = v + longitudinal_dv
+        #TODO: lateral and radial to be implemented
+        # recalculate orbital parameters
+        e = sqrt((r*v**2/self.primary.GM - 1)**2 * cos(fphi)**2 + sin(fphi)**2)
+        a = 1/(2/r - v**2/self.primary.GM)
+        mu = atan( r*v**2/self.primary.GM*cos(fphi)*sin(fphi) / 
+                  (r*v**2/self.primary.GM*cos(fphi)**2 - 1) )
+        return a,e,mu
+
 def calc_orbit(primary,a=False,e=False,T=False,rp=False,ra=False):
     """Calculate orbital parameters from given data"""
 

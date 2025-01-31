@@ -24,7 +24,8 @@ if __name__ == "__main__":
     ksp.plot_orbits([Kerbin.orbit, Duna.orbit, ksp.calc_window(Kerbin.orbit, Duna.orbit, 0)])
 
 # %%
-Kerbol.secondaries
+lko = ksp.calc_orbit(Kerbin,e=0,T=1840)
+lko.max_alt,lko.min_alt
 # %%
-Mun.secondaries
+lko.do_maneuver(0,10)
 # %%
