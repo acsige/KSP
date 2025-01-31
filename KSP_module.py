@@ -23,7 +23,8 @@ class body:
 
 
 class planetary_body(body):
-    def __init__(self, orbit, GM, radius=0, atmo_height=0):
+    def __init__(self, name, orbit, GM, radius=0, atmo_height=0):
+        self.__name__ = name
         super().__init__(orbit)
         self.GM = GM
         self.radius = radius
@@ -31,6 +32,12 @@ class planetary_body(body):
         self.soi = self.orbit.a*(self.GM/self.primary.GM)**(2/5)
         self.secondaries = []
         orbit.primary.secondaries.append(self)
+
+    def __str__(self):
+        return self.__name__
+    
+    def __repr__(self):
+        return self.__name__
 
     def calc_orbital_velocity(self, altitude):
         if altitude > self.atmo_height:
