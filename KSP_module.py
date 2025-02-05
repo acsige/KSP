@@ -45,6 +45,7 @@ class planetary_body(body):
         #else:
             #raise ValueError("Altitude is inside atmosphere")
     
+#todo: add RAAN
 class orbit:
     """Default orbit is the circular orbit of Kerbin around Kerbol"""
     def __init__(self, 
