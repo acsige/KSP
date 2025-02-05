@@ -82,6 +82,8 @@ class orbit:
     def calc_mean_anomaly(self, time):
         return time*self.n + self.t0
 
+#todo: scipy.optimize.newton
+#todo: test function w/ calc_window
     def calc_eccentric_anomaly(self, time):
         """M: mean anomaly, e: eccentricity, E: eccentric anomaly"""
         def f(E,M,e): return E - e*np.sin(E) - M
