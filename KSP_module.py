@@ -54,12 +54,14 @@ class orbit:
                  e=0,
                  i=0,
                  omega=0,
-                 t0=3.14):
+                 t0=0,
+                 nu0=3.14):
         self.a = a # semi-major axis
         self.e = e # eccentricity
         self.i = i*np.pi/180 # inclination in radians
         self.omega = omega*np.pi/180 # argument of periapsis in radians
-        self.t0 = t0 # epoch
+        self.t0 = t0 # epoch, time of periapsis
+        self.nu0 = nu0 # true anomaly at epoch
         self.primary = primary
         self.rp = a*(1-e) # periapsis
         self.ra = a*(1+e) # apoapsis
@@ -80,7 +82,7 @@ class orbit:
         return self.vp**2/2-self.primary.GM/self.rp < 0
 
     def calc_mean_anomaly(self, time):
-        return time*self.n + self.t0
+        return (time-self.t0)*self.n + self.nu0
 
 #todo: scipy.optimize.newton
 #todo: test function w/ calc_window
@@ -276,7 +278,7 @@ def calc_window(src_orbit, dst_orbit, t0):
     else:
         ang_offset = 0
 
-    Hohmann = orbit(primary, a,e, omega = (ang_launch+ang_offset)*180/pi, t0=ang_offset-t_launch*n)
+    Hohmann = orbit(primary, a,e, omega = (ang_launch+ang_offset)*180/pi, nu0=ang_offset-t_launch*n)
     Hohmann.t_launch = t_launch
     
     # initial value for the while loop
