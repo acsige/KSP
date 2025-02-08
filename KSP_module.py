@@ -60,17 +60,23 @@ class orbit:
         self.e = e # eccentricity
         self.i = i*np.pi/180 # inclination in radians
         self.omega = omega*np.pi/180 # argument of periapsis in radians
-        self.t0 = t0 # epoch, time of periapsis
-        self.nu0 = nu0 # true anomaly at epoch
+        self.t0 = t0 # time of orbit initialization
         self.primary = primary
+        self.T = np.sqrt(4*np.pi**2*a**3/self.primary.GM) # orbital period, seconds
+        self.n = 2*np.pi/self.T # angular velocity, rad/s
+        if nu0 == 0:
+            self.t_epoch = t0
+        else:
+            self.t_epoch = self.calc_epoch_time(nu0)
+        self.nu0 = nu0 # true anomaly at epoch
+
+
         self.rp = a*(1-e) # periapsis
         self.ra = a*(1+e) # apoapsis
         self.vp = np.sqrt(primary.GM*(1+self.e)/(self.a*(1-self.e))) # velocity at periapsis
         self.va = np.sqrt(primary.GM*(1-self.e)/(self.a*(1+self.e))) # velocity at apoapsis
         self.min_alt = self.rp - primary.radius
         self.max_alt = self.ra - primary.radius
-        self.T = np.sqrt(4*np.pi**2*a**3/self.primary.GM) # orbital period, seconds
-        self.n = 2*np.pi/self.T # angular velocity, rad/s
         self.is_elliptic = self.check_elliptic()
 
         # calculate orbit for visualization
@@ -110,6 +116,12 @@ class orbit:
         phi = self.omega + nu
         r = self.a*(1-self.e*self.e)/(1+self.e*np.cos(nu))
         return phi,r
+    
+    def calc_epoch_time(self, nu0):
+        """Calculate epoch time from true anomaly"""
+        E0 = np.arccos((self.e+np.cos(nu0)) / (1+self.e*np.cos(nu0)))
+        M0 = E0 - self.e*np.sin(E0)
+        return self.t0-M0/self.n
 
     def recalc_orbit_visu(self, start_time, end_time):
         """function to recalculate orbit for visualization"""
