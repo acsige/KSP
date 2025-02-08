@@ -21,8 +21,8 @@ if __name__ == "__main__":
                          GM=1.7658e9, radius=6e4, atmo_height=0)
 # %% 
     
-    ksp.plot_orbits([Kerbin.orbit, Eve.orbit, ksp.calc_window(Kerbin.orbit, Eve.orbit, 0)])
-    ksp.plot_orbits([Kerbin.orbit, Duna.orbit, ksp.calc_window(Kerbin.orbit, Duna.orbit, 0)])
+    ksp.plot_hohmann_orbits([Kerbin.orbit, Eve.orbit, ksp.calc_window(Kerbin.orbit, Eve.orbit, 0)])
+    ksp.plot_hohmann_orbits([Kerbin.orbit, Duna.orbit, ksp.calc_window(Kerbin.orbit, Duna.orbit, 0)])
 
 # %%
 lko = ksp.calc_orbit(Kerbin,e=0,T=1840)

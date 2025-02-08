@@ -47,7 +47,15 @@ class planetary_body(body):
     
 #todo: add RAAN
 class orbit:
-    """Default orbit is the circular orbit of Kerbin around Kerbol"""
+    """Default orbit is the circular orbit of Kerbin around Kerbol
+    Inputs are a bit chaotic but conform to KSP's way of defining orbits:
+    primary: body around which the orbit is
+    a: semi-major axis in meters
+    e: eccentricity
+    i: inclination in degrees
+    omega: argument of periapsis in degrees
+    t0: time of orbit initialization
+    nu0: true anomaly at initialization in radians"""
     def __init__(self, 
                  primary=Kerbol, 
                  a=13599840256, 
@@ -245,7 +253,7 @@ def calc_hohmann(src_orbit, dst_orbit, t0):
     
     return a,e,n,hohmann_time
 
-def plot_orbits(orbit_list):
+def plot_hohmann_orbits(orbit_list):
     """Plot planet orbits, 0: source, 1: destination, 2: transfer orbit """
     fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
     ax.clear()
@@ -266,14 +274,17 @@ def plot_orbits(orbit_list):
     ax.legend(loc=1)
 
 def calc_window(src_orbit, dst_orbit, t0):
-    # angle difference at zero time
-    d_ang_0 = dst_orbit.calc_mean_anomaly(t0) - src_orbit.calc_mean_anomaly(t0)
+    """Transfer window calculation for Hohmann transfer"""
     assert(src_orbit.primary == dst_orbit.primary)
     primary = src_orbit.primary
 
+    # angle difference at zero time
+    d_ang_0 = dst_orbit.calc_mean_anomaly(t0) - src_orbit.calc_mean_anomaly(t0)
+
     # First iteration
     a,e,n,t_h = calc_hohmann(src_orbit, dst_orbit, t0)
-    # Angle difference at ideal launch time, calculated with transfer time
+    # Approximation of angle difference at ideal launch time
+    # calculated with first iteration of transfer time and angular velocities assuming circular orbits
     d_ang = pi - t_h*dst_orbit.n
     # If the target is already past the position, the next opportunity must be searched
     if d_ang_0 > d_ang:
@@ -290,7 +301,7 @@ def calc_window(src_orbit, dst_orbit, t0):
     else:
         ang_offset = 0
 
-    Hohmann = orbit(primary, a,e, omega = (ang_launch+ang_offset)*180/pi, nu0=ang_offset-t_launch*n)
+    Hohmann = orbit(primary, a,e, omega = (ang_launch+ang_offset)*180/pi, t0=t_launch, nu0=ang_offset)
     Hohmann.t_launch = t_launch
     
     # initial value for the while loop
@@ -312,7 +323,7 @@ def calc_window(src_orbit, dst_orbit, t0):
         # recalculate transfer orbit
         a,e,n,t_h = calc_hohmann(src_orbit, dst_orbit, t_launch)
         ang_launch,r = src_orbit.calc_polar(t_launch)
-        Hohmann = orbit(primary, a,e, omega = (ang_launch+ang_offset)*180/pi, t0=ang_offset-t_launch*n)
+        Hohmann = orbit(primary, a,e, omega = (ang_launch+ang_offset)*180/pi, t0=t_launch, nu0=ang_offset)
         Hohmann.t_launch = t_launch
     
     # Prepare output
