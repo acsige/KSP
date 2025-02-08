@@ -271,6 +271,7 @@ def plot_hohmann_orbit(src_body, dst_body, transfer_orbit):
     ax = add_point_to_plot(ax, transfer_orbit.calc_polar(transfer_orbit.t_launch))
     ax = add_point_to_plot(ax, transfer_orbit.calc_polar(transfer_orbit.t_arrival))
     ax = add_point_to_plot(ax, dst_body.orbit.calc_polar(transfer_orbit.t_launch), f"{dst_body} at launch")
+    return fig,ax
 
 def calc_window(src_orbit, dst_orbit, t0):
     """Transfer window calculation for Hohmann transfer"""
@@ -337,6 +338,8 @@ def time(date):
     return (date[0]*Kerbin.year + date[1]*60*60*6 + date[2]*60*60 + date[3]*60 + date[4])
 
 def date(time):
+    """Convert seconds to date for KSP. Output is a list of integers: [year, day, hour, minute, second]"""
+    #TODO: check if the year is correct
     year = time // Kerbin.year
     time = time % Kerbin.year
     day = time//(60*60*6)
@@ -347,10 +350,12 @@ def date(time):
     second = time%60
     return [year, day, hour, minute, second]
 
+def pretty_date(time):
+    [year, day, hour, minute, second] = date(time)
+    print(f'{year:.0f} y {day:.0f} d {hour:.0f} h {minute:.0f} m {second:.0f} s')
+
 def initialize_plot():
     fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
-    #ax.set_rticks([0,1])  # Less radial ticks
-    ax.set_rlabel_position(-22.5)  # Move radial labels away from plotted line
     ax.grid(True, alpha=0.2)
     ax.set_yticklabels([])  # Hide radial labels
     return fig, ax
