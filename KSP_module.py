@@ -3,16 +3,23 @@ import matplotlib.pyplot as plt
 from math import sqrt, pi, sin, cos, atan
 
 class star:
-    def __init__(self, GM=1.1723328e18, radius=2.616e8):
+    def __init__(self, name, GM=1.1723328e18, radius=2.616e8):
+        self.__name__ = name
         self.GM = GM
         self.radius = radius
         self.secondaries = []
+    
+    def __str__(self):
+        return self.__name__
+    
+    def __repr__(self):
+        return self.__name__
 
     def calc_xy(self, time):
         """The star is at the origin"""
         return (0,0)
 
-Kerbol = star()
+Kerbol = star('Kerbol')
 
 class body:
     """Planets, moons, spacecrafts, etc."""
@@ -255,25 +262,15 @@ def calc_hohmann(src_orbit, dst_orbit, t0):
     
     return a,e,n,hohmann_time
 
-def plot_hohmann_orbits(orbit_list):
-    """Plot planet orbits, 0: source, 1: destination, 2: transfer orbit """
-    fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
-    ax.clear()
-    for p in orbit_list:
-        ax.plot(p.phi, p.r)
-    t_launch = orbit_list[2].t_launch
-    t_arrival = t_launch + orbit_list[2].T/2
-
-    ax.plot(orbit_list[0].calc_polar(t_launch)[0],orbit_list[0].calc_polar(t_launch)[1], 'o', label="Launch")
-    ax.plot(orbit_list[1].calc_polar(t_launch)[0],orbit_list[1].calc_polar(t_launch)[1], 'o', label="Dest at launch")
-    ax.plot(orbit_list[1].calc_polar(t_arrival)[0],orbit_list[1].calc_polar(t_arrival)[1], 'o', label="Arrival")
-    ax.plot(orbit_list[2].calc_polar(t_launch)[0],orbit_list[2].calc_polar(t_launch)[1], 'x', label="Hohmann launch")
-    ax.plot(orbit_list[2].calc_polar(t_arrival)[0],orbit_list[2].calc_polar(t_arrival)[1], 'x', label="Hohmann arrival")
-    
-    ax.set_rticks([0.5, 1, 1.5, 2])  # Less radial ticks
-    ax.set_rlabel_position(-22.5)  # Move radial labels away from plotted line
-    ax.grid(True)
-    ax.legend(loc=1)
+def plot_hohmann_orbit(src_body, dst_body, transfer_orbit):
+    """Plot Hohmann transfer, 0: source body, 1: destination body, 2: transfer orbit """
+    fig,ax = initialize_plot()
+    ax = add_planetary_body_to_plot(ax, src_body)
+    ax = add_planetary_body_to_plot(ax, dst_body)
+    ax = add_orbit_to_plot(ax, transfer_orbit)
+    ax = add_point_to_plot(ax, transfer_orbit.calc_polar(transfer_orbit.t_launch))
+    ax = add_point_to_plot(ax, transfer_orbit.calc_polar(transfer_orbit.t_arrival))
+    ax = add_point_to_plot(ax, dst_body.orbit.calc_polar(transfer_orbit.t_launch), f"{dst_body} at launch")
 
 def calc_window(src_orbit, dst_orbit, t0):
     """Transfer window calculation for Hohmann transfer"""
@@ -349,6 +346,30 @@ def date(time):
     minute = time//60
     second = time%60
     return [year, day, hour, minute, second]
+
+def initialize_plot():
+    fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
+    #ax.set_rticks([0,1])  # Less radial ticks
+    ax.set_rlabel_position(-22.5)  # Move radial labels away from plotted line
+    ax.grid(True, alpha=0.2)
+    ax.set_yticklabels([])  # Hide radial labels
+    return fig, ax
+
+def add_planetary_body_to_plot(ax, body):
+    ax.plot(body.orbit.phi, body.orbit.r, label=body.__name__)
+    ax.legend(loc=1)
+    return ax
+
+def add_orbit_to_plot(ax, orbit, label=None):
+    ax.plot(orbit.phi, orbit.r, label=label)
+    ax.legend(loc=1)
+    return ax
+
+def add_point_to_plot(ax, coordinates, label=None, marker='o'):
+    (phi, r) = coordinates
+    ax.plot(phi, r, marker, label=label)
+    ax.legend(loc=1)
+    return ax
 
 # Planetary bodies
 Eve = planetary_body('Eve', orbit(Kerbol, a=9832684544, e=0.01, omega=15, i=2.1),

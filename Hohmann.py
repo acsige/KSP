@@ -11,11 +11,11 @@ from KSP_module import Kerbol, Kerbin, Duna, Eve, Mun, Minmus
 if __name__ == "__main__":
     # Plotting Hohmann transfer orbits
     transfer1 = ksp.calc_window(Kerbin.orbit, Duna.orbit, 0)
-    ksp.plot_hohmann_orbits([Kerbin.orbit, Duna.orbit, transfer1])
-    print(ksp.date(transfer1.t_launch))
+    print(transfer1.primary, ksp.date(transfer1.t_launch))
+    ksp.plot_hohmann_orbit(Kerbin, Duna, transfer1)
     
-    #ksp.plot_hohmann_orbits([Kerbin.orbit, Eve.orbit, ksp.calc_window(Kerbin.orbit, Eve.orbit, 0)])
-
+    transfer2 = ksp.calc_window(Kerbin.orbit, Eve.orbit, 0)
+    ksp.plot_hohmann_orbit(Kerbin, Eve, transfer2)
 
 # %%
 lko = ksp.calc_orbit(Kerbin,e=0,T=1840)
