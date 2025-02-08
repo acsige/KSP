@@ -28,6 +28,7 @@ class planetary_body(body):
         super().__init__(orbit)
         self.GM = GM
         self.radius = radius
+        self.year = orbit.T
         self.atmo_height = atmo_height
         self.soi = self.orbit.a*(self.GM/self.primary.GM)**(2/5)
         self.secondaries = []
@@ -78,14 +79,15 @@ class orbit:
             self.t_epoch = self.calc_epoch_time(nu0)
         self.nu0 = nu0 # true anomaly at epoch
 
-
         self.rp = a*(1-e) # periapsis
         self.ra = a*(1+e) # apoapsis
         self.vp = np.sqrt(primary.GM*(1+self.e)/(self.a*(1-self.e))) # velocity at periapsis
         self.va = np.sqrt(primary.GM*(1-self.e)/(self.a*(1+self.e))) # velocity at apoapsis
         self.min_alt = self.rp - primary.radius
         self.max_alt = self.ra - primary.radius
+        
         self.is_elliptic = self.check_elliptic()
+        self.is_hohmann = False # default setting
 
         # calculate orbit for visualization
         self.t = np.linspace(0, self.T, 100)
@@ -328,5 +330,34 @@ def calc_window(src_orbit, dst_orbit, t0):
     
     # Prepare output
     Hohmann.recalc_orbit_visu(t_launch,t_arrival)
-    print("{0:.1f} s, {1:.2f} d".format(t_launch, t_launch/3600/6))
+    Hohmann.t_launch = t_launch
+    Hohmann.t_arrival = t_arrival
+    Hohmann.is_hohmann = True
     return Hohmann
+
+def time(date):
+    """Convert date to seconds for KSP. Input is a list of integers: [year, day, hour, minute, second]"""
+    return (date[0]*Kerbin.year + date[1]*60*60*6 + date[2]*60*60 + date[3]*60 + date[4])
+
+def date(time):
+    year = time // Kerbin.year
+    time = time % Kerbin.year
+    day = time//(60*60*6)
+    time = time%(60*60*6)
+    hour = time//(60*60)
+    time = time%(60*60)
+    minute = time//60
+    second = time%60
+    return [year, day, hour, minute, second]
+
+# Planetary bodies
+Eve = planetary_body('Eve', orbit(Kerbol, a=9832684544, e=0.01, omega=15, i=2.1),
+                    GM=8.1717302e12, radius=7e5, atmo_height=9e4)
+Kerbin = planetary_body('Kerbin', orbit(Kerbol, a=13599840256, e=0),
+                        GM=3.5316e12, radius=6e5, atmo_height=7e4)
+Duna = planetary_body('Duna', orbit(Kerbol, a=20726155264, e=0.051, omega=135.5, i=0.06),
+                        GM=3.0136321e11, radius=3.2e5, atmo_height=5e4)
+Mun = planetary_body('Mun', orbit(Kerbin, a=1.2e6, e=0, nu0=1.7),
+                        GM=6.5138398e10, radius=2e5, atmo_height=0)
+Minmus = planetary_body('Minmus', orbit(Kerbin, a=4.7e7, e=0, nu0=0.9),
+                        GM=1.7658e9, radius=6e4, atmo_height=0)
