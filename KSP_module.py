@@ -39,11 +39,11 @@ class planetary_body(body):
     def __repr__(self):
         return self.__name__
 
-    #def calc_orbital_velocity(self, altitude):
-        #if altitude > self.atmo_height:
-            #return np.sqrt(self.GM/(self.radius + self.atmo_height))
-        #else:
-            #raise ValueError("Altitude is inside atmosphere")
+    def calc_orbital_velocity(self, altitude):
+        if altitude > self.atmo_height:
+            return np.sqrt(self.GM/(self.radius + altitude))
+        else:
+            raise ValueError("Altitude is inside atmosphere")
     
 #todo: add RAAN
 class orbit:
