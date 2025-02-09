@@ -12,15 +12,12 @@ if __name__ == "__main__":
     transfer1 = ksp.calc_window(Kerbin.orbit, Duna.orbit, 0)
     fig,ax = ksp.plot_hohmann_orbit(Kerbin, Duna, transfer1)
     plt.show()
-    ksp.pretty_date(transfer1.t_launch)
+    print([ksp.pretty_date(transfer1.t_launch), transfer1.t_launch])
     
     transfer2 = ksp.calc_window(Kerbin.orbit, Eve.orbit, 0)
     fig,ax = ksp.plot_hohmann_orbit(Kerbin, Eve, transfer2)
     plt.show()
-    ksp.pretty_date(transfer2.t_launch)
-
-
-# %%
+    print([ksp.pretty_date(transfer2.t_launch), transfer2.t_launch])
 
 
 #%%
