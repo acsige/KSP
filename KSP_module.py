@@ -304,15 +304,23 @@ def calc_hohmann(src_orbit, dst_orbit, t0):
     
     return a,e,n,hohmann_time
 
-def plot_hohmann_orbit(src_body, dst_body, transfer_orbit):
+def plot_hohmann_orbit(src, dst, transfer_orbit):
     """Plot Hohmann transfer, 0: source body, 1: destination body, 2: transfer orbit """
     fig,ax = initialize_plot()
-    ax = add_planetary_body_to_plot(ax, src_body)
-    ax = add_planetary_body_to_plot(ax, dst_body)
+    if isinstance(src, planetary_body):
+        ax = add_planetary_body_to_plot(ax, src)
+    else:
+        ax = add_orbit_to_plot(ax, src)
+
+    if isinstance(dst, planetary_body):
+        ax = add_planetary_body_to_plot(ax, dst)
+    else:
+        ax = add_orbit_to_plot(ax, dst)
+
     ax = add_orbit_to_plot(ax, transfer_orbit)
     ax = add_point_to_plot(ax, transfer_orbit.calc_polar(transfer_orbit.t_launch))
     ax = add_point_to_plot(ax, transfer_orbit.calc_polar(transfer_orbit.t_arrival))
-    ax = add_point_to_plot(ax, dst_body.orbit.calc_polar(transfer_orbit.t_launch), f"{dst_body} at launch")
+    ax = add_point_to_plot(ax, dst.orbit.calc_polar(transfer_orbit.t_launch), f"{dst} at launch")
     return fig,ax
 
 def calc_window(src_orbit, dst_orbit, t0):
@@ -430,7 +438,7 @@ Kerbin = planetary_body('Kerbin', orbit(Kerbol, a=13599840256, e=0, nu0=3.14),
                         GM=3.5316e12, radius=6e5, atmo_height=7e4)
 Duna = planetary_body('Duna', orbit(Kerbol, a=20726155264, e=0.051, omega=135.5, i=0.06, nu0=3.14),
                         GM=3.0136321e11, radius=3.2e5, atmo_height=5e4)
-Mun = planetary_body('Mun', orbit(Kerbin, a=1.2e6, e=0, nu0=1.7),
+Mun = planetary_body('Mun', orbit(Kerbin, a=1.2e7, e=0, nu0=1.7),
                         GM=6.5138398e10, radius=2e5, atmo_height=0)
 Minmus = planetary_body('Minmus', orbit(Kerbin, a=4.7e7, e=0, nu0=0.9),
                         GM=1.7658e9, radius=6e4, atmo_height=0)
@@ -445,8 +453,8 @@ if __name__ == "__main__":
     assert(abs(transfer2.t_launch - 11823657.05)<0.1)
     assert(abs(transfer2.t_arrival - 15502102.85)<0.1)
 
-    LKO = orbit(Kerbin, min_alt = 70000, e=0)
+    LKO = orbit(Kerbin, min_alt = 70000.1, e=0)
     transfer3 = calc_window(LKO, Mun.orbit, 0)
-    assert(abs(transfer3.t_arrival - 15502102.85)<0.1)
-    assert(abs(transfer3.t_launch - 11823657.05)<0.1)
+    assert(abs(transfer3.t_arrival - 100.0)<0.1)
+    assert(abs(transfer3.t_launch - 100.0)<0.1)
     print('All tests passed')

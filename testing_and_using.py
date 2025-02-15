@@ -19,8 +19,8 @@ if __name__ == "__main__":
     fig,ax = ksp.plot_hohmann_orbit(Kerbin, Eve, transfer2)
     plt.show()
     print([ksp.pretty_date(transfer2.t_launch), transfer2.t_launch])
-#%%
-    LKO = orbit(Kerbin, min_alt = 70000, e=0)
+
+    LKO = orbit(Kerbin, min_alt = 70000.1, e=0)
     transfer3 = ksp.calc_window(LKO, Mun.orbit, 0)
     fig,ax = ksp.plot_hohmann_orbit(LKO, Mun, transfer3)
     plt.show()
