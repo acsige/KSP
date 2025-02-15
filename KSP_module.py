@@ -8,6 +8,7 @@ class star:
         self.GM = GM
         self.radius = radius
         self.secondaries = []
+        self.atmo_height = 0
     
     def __str__(self):
         return self.__name__
@@ -64,37 +65,104 @@ class orbit:
     omega: argument of periapsis in degrees
     t0: time of orbit initialization
     nu0: true anomaly at initialization in radians"""
-    def __init__(self, 
-                 primary=Kerbol, 
-                 a=13599840256, 
-                 e=0,
-                 i=0,
-                 omega=0,
-                 t0=0,
-                 nu0=3.14):
-        self.a = a # semi-major axis
-        self.e = e # eccentricity
-        self.i = i*np.pi/180 # inclination in radians
-        self.omega = omega*np.pi/180 # argument of periapsis in radians
-        self.t0 = t0 # time of orbit initialization
+    def __init__(self, primary, **kwargs):
         self.primary = primary
-        self.T = np.sqrt(4*np.pi**2*a**3/self.primary.GM) # orbital period, seconds
-        self.n = 2*np.pi/self.T # angular velocity, rad/s
-        if nu0 == 0:
-            self.t_epoch = t0
-        else:
-            self.t_epoch = self.calc_epoch_time(nu0)
-        self.nu0 = nu0 # true anomaly at epoch
+        orbit_kwargs = self.calc_missing_parameters(**kwargs)
 
-        self.rp = a*(1-e) # periapsis
-        self.ra = a*(1+e) # apoapsis
+        self.a = orbit_kwargs['a'] # semi-major axis
+        self.e = orbit_kwargs['e'] # eccentricity
+        self.i = orbit_kwargs['i']*np.pi/180 # inclination in radians
+        self.omega = orbit_kwargs['omega']*np.pi/180 # argument of periapsis in radians
+        self.t0 = orbit_kwargs['t0'] # time of orbit initialization
+        
+        self.T = np.sqrt(4*np.pi**2*self.a**3/self.primary.GM) # orbital period, seconds
+        self.n = 2*np.pi/self.T # angular velocity, rad/s
+        if orbit_kwargs['nu0'] == 0:
+            self.t_epoch = self.t0
+        else:
+            self.t_epoch = self.calc_epoch_time(orbit_kwargs['nu0'])
+        self.nu0 = orbit_kwargs['nu0'] # true anomaly at epoch
+
+        self.rp = self.a*(1-self.e) # periapsis
+        self.ra = self.a*(1+self.e) # apoapsis
         self.vp = np.sqrt(primary.GM*(1+self.e)/(self.a*(1-self.e))) # velocity at periapsis
         self.va = np.sqrt(primary.GM*(1-self.e)/(self.a*(1+self.e))) # velocity at apoapsis
+        
         self.min_alt = self.rp - primary.radius
+        if self.min_alt < self.primary.atmo_height:
+            raise ValueError("Minimum altitude is inside atmosphere")
         self.max_alt = self.ra - primary.radius
         
         self.is_elliptic = self.check_elliptic()
         self.is_hohmann = False # default setting
+
+        self.recalc_orbit_visu(self.t0, self.t0+self.T)
+
+    def calc_missing_parameters(self, **kwargs):
+        """Calculate parameters needed for orbit definition from given data.
+        
+        Parameters
+        ----------
+        primary : planetary_body
+            The primary body around which the orbit is calculated.
+        **kwargs : dict
+            Keyword arguments for the orbit class.
+        
+        Returns
+        -------
+        orbit
+            The calculated orbit.
+        """
+        
+        # convert altitudes to apsis distances
+        if 'min_alt' in kwargs:
+            assert('rp' not in kwargs)
+            kwargs['rp'] = self.primary.radius + kwargs['min_alt']
+
+        if 'max_alt' in kwargs:
+            assert('ra' not in kwargs)
+            kwargs['ra'] = self.primary.radius + kwargs['max_alt']
+
+        # calculate semi-major axis from different parameters
+        if 'T' in kwargs:
+            assert('a' not in kwargs)
+            kwargs['a'] = (kwargs['T']/(2*pi))**(2/3)*self.primary.GM**(1/3)
+
+        if 'rp' in kwargs and 'ra' in kwargs:
+            assert('a' not in kwargs)
+            assert('e' not in kwargs)
+            kwargs['a'] = (kwargs['rp'] + kwargs['ra']) / 2
+            kwargs['e'] = (kwargs['ra'] - kwargs['rp']) / (kwargs['ra'] + kwargs['rp'])
+
+        if 'rp' in kwargs and 'e' in kwargs:
+            assert('a' not in kwargs)
+            assert('ra' not in kwargs)
+            kwargs['a'] = kwargs['rp'] / (1 - kwargs['e'])
+
+        if 'ra' in kwargs and 'e' in kwargs:
+            assert('a' not in kwargs)
+            assert('rp' not in kwargs)
+            kwargs['a'] = kwargs['ra'] / (1 + kwargs['e'])
+            
+        # at this point we should have a and e
+        # set defaults for missing values
+        if 'i' not in kwargs:
+            kwargs['i'] = 0
+
+        if 'omega' not in kwargs:
+            kwargs['omega'] = 0
+
+        if 't0' not in kwargs:
+            kwargs['t0'] = 0
+
+        if 'nu0' not in kwargs:
+            kwargs['nu0'] = 0
+
+        # define orbit with only the keys expected by the orbit class
+        # no check for missing keys, the orbit class will raise an error
+        orbit_input_keys = ['a', 'e', 'i', 'omega', 't0', 'nu0']
+        orbit_kwargs = {k:kwargs[k] for k in orbit_input_keys}
+        return orbit_kwargs
 
         # calculate orbit for visualization
         self.t = np.linspace(0, self.T, 100)
@@ -142,7 +210,7 @@ class orbit:
 
     def recalc_orbit_visu(self, start_time, end_time):
         """function to recalculate orbit for visualization"""
-        self.t = np.linspace(start_time, end_time, 50)
+        self.t = np.linspace(start_time, end_time, 100)
         self.phi, self.r = self.calc_polar(self.t)
 
     def calc_speed(self, time):
@@ -198,32 +266,6 @@ class orbit:
         mu = atan( r*v**2/self.primary.GM*cos(fphi)*sin(fphi) / 
                   (r*v**2/self.primary.GM*cos(fphi)**2 - 1) )
         return a,e,mu
-
-def calc_orbit(primary,a=False,e=False,T=False,rp=False,ra=False):
-    """Calculate orbital parameters from given data"""
-
-    if bool(T):
-        a = (T/(2*np.pi))**(2/3)*primary.GM**(1/3)
-    if bool(rp) and bool(ra):
-        a = (rp + ra)/2
-    if bool(rp) and bool(e):
-        a = rp/(1-e)
-    if bool(ra) and bool(e):
-        a = ra/(1+e)
-    
-    if not(isinstance(e, bool)):
-        rp = a*(1-e)
-        ra = a*(1+e)
-
-    if not(isinstance(ra, bool)):
-        e = ra/a-1
-        rp = a*(1-e)
-
-    if not(isinstance(rp, bool)):
-        e = 1-rp/a
-        ra = a*(1+e)
-
-    return orbit(primary, a, e)
 
 def calc_hohmann(src_orbit, dst_orbit, t0):
     """
@@ -301,7 +343,8 @@ def calc_window(src_orbit, dst_orbit, t0):
     else:
         ang_offset = 0
 
-    Hohmann = orbit(primary, a,e, omega = (ang_launch+ang_offset)*180/pi, t0=t_launch, nu0=ang_offset)
+    kwargs = {'a':a, 'e':e, 'omega':(ang_launch+ang_offset)*180/pi, 't0':t_launch, 'nu0':ang_offset}
+    Hohmann = orbit(primary, **kwargs)
     Hohmann.t_launch = t_launch
     
     # initial value for the while loop
@@ -323,7 +366,9 @@ def calc_window(src_orbit, dst_orbit, t0):
         # recalculate transfer orbit
         a,e,n,t_h = calc_hohmann(src_orbit, dst_orbit, t_launch)
         ang_launch,r = src_orbit.calc_polar(t_launch)
-        Hohmann = orbit(primary, a,e, omega = (ang_launch+ang_offset)*180/pi, t0=t_launch, nu0=ang_offset)
+ 
+        kwargs = {'a':a, 'e':e, 'omega':(ang_launch+ang_offset)*180/pi, 't0':t_launch, 'nu0':ang_offset}
+        Hohmann = orbit(primary, **kwargs)
         Hohmann.t_launch = t_launch
     
     # Prepare output
@@ -377,13 +422,26 @@ def add_point_to_plot(ax, coordinates, label=None, marker='o'):
     return ax
 
 # Planetary bodies
-Eve = planetary_body('Eve', orbit(Kerbol, a=9832684544, e=0.01, omega=15, i=2.1),
+Moho = planetary_body('Moho', orbit(Kerbol, a=5263138304, e=0.2, omega=15, i=7, nu0=3.14),
                     GM=8.1717302e12, radius=7e5, atmo_height=9e4)
-Kerbin = planetary_body('Kerbin', orbit(Kerbol, a=13599840256, e=0),
+Eve = planetary_body('Eve', orbit(Kerbol, a=9832684544, e=0.01, omega=15, i=2.1, nu0=3.14),
+                    GM=8.1717302e12, radius=7e5, atmo_height=9e4)
+Kerbin = planetary_body('Kerbin', orbit(Kerbol, a=13599840256, e=0, nu0=3.14),
                         GM=3.5316e12, radius=6e5, atmo_height=7e4)
-Duna = planetary_body('Duna', orbit(Kerbol, a=20726155264, e=0.051, omega=135.5, i=0.06),
+Duna = planetary_body('Duna', orbit(Kerbol, a=20726155264, e=0.051, omega=135.5, i=0.06, nu0=3.14),
                         GM=3.0136321e11, radius=3.2e5, atmo_height=5e4)
 Mun = planetary_body('Mun', orbit(Kerbin, a=1.2e6, e=0, nu0=1.7),
                         GM=6.5138398e10, radius=2e5, atmo_height=0)
 Minmus = planetary_body('Minmus', orbit(Kerbin, a=4.7e7, e=0, nu0=0.9),
                         GM=1.7658e9, radius=6e4, atmo_height=0)
+
+
+if __name__ == "__main__":
+    # Testing w/ Hohmann transfer orbits
+    transfer1 = calc_window(Kerbin.orbit, Duna.orbit, 0)
+    assert(abs(transfer1.t_launch - 5087908.78)<0.1)
+    assert(abs(transfer1.t_arrival - 11465565.37)<0.1)
+    transfer2 = calc_window(Kerbin.orbit, Eve.orbit, 0)
+    assert(abs(transfer2.t_launch - 11823657.05)<0.1)
+    assert(abs(transfer2.t_arrival - 15502102.85)<0.1)
+    print('All tests passed')
