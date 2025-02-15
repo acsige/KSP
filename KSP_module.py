@@ -444,4 +444,9 @@ if __name__ == "__main__":
     transfer2 = calc_window(Kerbin.orbit, Eve.orbit, 0)
     assert(abs(transfer2.t_launch - 11823657.05)<0.1)
     assert(abs(transfer2.t_arrival - 15502102.85)<0.1)
+
+    LKO = orbit(Kerbin, min_alt = 70000, e=0)
+    transfer3 = calc_window(LKO, Mun.orbit, 0)
+    assert(abs(transfer3.t_arrival - 15502102.85)<0.1)
+    assert(abs(transfer3.t_launch - 11823657.05)<0.1)
     print('All tests passed')

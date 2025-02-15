@@ -19,9 +19,14 @@ if __name__ == "__main__":
     fig,ax = ksp.plot_hohmann_orbit(Kerbin, Eve, transfer2)
     plt.show()
     print([ksp.pretty_date(transfer2.t_launch), transfer2.t_launch])
-
+#%%
+    LKO = orbit(Kerbin, min_alt = 70000, e=0)
+    transfer3 = ksp.calc_window(LKO, Mun.orbit, 0)
+    fig,ax = ksp.plot_hohmann_orbit(LKO, Mun, transfer3)
+    plt.show()
+    print([ksp.pretty_date(transfer3.t_launch), transfer3.t_launch])
 # %%
-lko.do_maneuver(0,10)
+LKO.do_maneuver(0,10)
 # %%
 def calc_orbit(primary, **kwargs):
     """Calculate an orbit around a primary body.
