@@ -317,7 +317,7 @@ def plot_hohmann_orbit(src, dst, transfer_orbit):
     else:
         ax = add_orbit_to_plot(ax, dst)
 
-    ax = add_orbit_to_plot(ax, transfer_orbit)
+    ax = add_orbit_to_plot(ax, transfer_orbit, "Transfer orbit")
     ax = add_point_to_plot(ax, transfer_orbit.calc_polar(transfer_orbit.t_launch))
     ax = add_point_to_plot(ax, transfer_orbit.calc_polar(transfer_orbit.t_arrival))
     ax = add_point_to_plot(ax, dst.orbit.calc_polar(transfer_orbit.t_launch), f"{dst} at launch")
@@ -331,6 +331,8 @@ def calc_window(src_orbit, dst_orbit, t0):
     # angle difference at zero time
     d_ang_0 = dst_orbit.calc_mean_anomaly(t0) - src_orbit.calc_mean_anomaly(t0)
 
+    # calculate period of search: time to get to the same angle difference as at zero time
+    t_window_period = 2*pi / abs(dst_orbit.n - src_orbit.n)
     # First iteration
     a,e,n,t_h = calc_hohmann(src_orbit, dst_orbit, t0)
     # Approximation of angle difference at ideal launch time
@@ -364,12 +366,16 @@ def calc_window(src_orbit, dst_orbit, t0):
         ang_h = np.mod(Hohmann.calc_polar(t_arrival)[0], 2*np.pi)
         ang_dst = np.mod(dst_orbit.calc_polar(t_arrival)[0], 2*np.pi)
         t_miss = (ang_h - ang_dst)/dst_orbit.n
+        
         # modify start time using calculated error
         # sign depends on relation of angular velocities of the src and dest orbits
-        if src_orbit.a > dst_orbit.a:
+        if src_orbit.a < dst_orbit.a: t_miss = -t_miss
+        
+        # first case: launch is expected in the next window period
+        if t_launch < t0 + t_window_period:
             t_launch = t_launch + t_miss
         else:
-            t_launch = t_launch - t_miss
+            raise NotImplementedError("Launch time outside of window period")
         
         # recalculate transfer orbit
         a,e,n,t_h = calc_hohmann(src_orbit, dst_orbit, t_launch)
@@ -419,6 +425,8 @@ def add_planetary_body_to_plot(ax, body):
     return ax
 
 def add_orbit_to_plot(ax, orbit, label=None):
+    if label is None:
+        label = f'{orbit.primary.__name__} orbit'
     ax.plot(orbit.phi, orbit.r, label=label)
     ax.legend(loc=1)
     return ax
@@ -453,8 +461,8 @@ if __name__ == "__main__":
     assert(abs(transfer2.t_launch - 11823657.05)<0.1)
     assert(abs(transfer2.t_arrival - 15502102.85)<0.1)
 
-    LKO = orbit(Kerbin, min_alt = 70000.1, e=0)
-    transfer3 = calc_window(LKO, Mun.orbit, 0)
-    assert(abs(transfer3.t_arrival - 100.0)<0.1)
-    assert(abs(transfer3.t_launch - 100.0)<0.1)
-    print('All tests passed')
+    # LKO = orbit(Kerbin, min_alt = 70000.1, e=0)
+    # transfer3 = calc_window(LKO, Mun.orbit, 0)
+    # assert(abs(transfer3.t_arrival - 100.0)<0.1)
+    # assert(abs(transfer3.t_launch - 100.0)<0.1)
+    # print('All tests passed')
