@@ -2,6 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from math import sqrt, pi, sin, cos, atan
 
+# tolerance for Hohmann transfer calculation
+MISS_TOL = 5  # seconds
+
 class star:
     def __init__(self, name, GM=1.1723328e18, radius=2.616e8):
         self.__name__ = name
@@ -16,9 +19,9 @@ class star:
     def __repr__(self):
         return self.__name__
 
-    def calc_xy(self, time):
+    def calc_xyz(self, time):
         """The star is at the origin"""
-        return (0,0)
+        return (0,0,0)
 
 Kerbol = star('Kerbol')
 
@@ -234,7 +237,7 @@ class orbit:
         v_target = np.sqrt(self.primary.GM/self.rp)
         return self.vp - v_target
     
-    def calc_xy(self, time):
+    def calc_xyz(self, time):
         """Calculate Cartesian coordinates for a given time"""
         phi,r = self.calc_polar(time)
         return np.asarray(r*np.cos(phi), r*np.sin(phi))
@@ -247,7 +250,7 @@ class orbit:
             other_orbit = other.orbit
         else:
             raise(TypeError)
-        return np.linalg.norm(self.calc_xy(time)-other_orbit.calc_xy(time))
+        return np.linalg.norm(self.calc_xyz(time)-other_orbit.calc_xyz(time))
     
     def do_maneuver(self, time, longitudinal_dv, lateral_dv=0, radial_dv=0):
         # radius at maneuver
@@ -359,7 +362,7 @@ def calc_window(src_orbit, dst_orbit, t0):
     # initial value for the while loop
     t_miss = 1000
     # Real iteration
-    while abs(t_miss) > 100:
+    while abs(t_miss) > MISS_TOL:
         # calculate timing error - by how much time we've missed the target when arriving
         t_arrival = t_launch + t_h
         ang_h = np.mod(Hohmann.calc_polar(t_arrival)[0], 2*np.pi)
@@ -456,15 +459,17 @@ Minmus = planetary_body('Minmus', orbit(Kerbin, a=4.7e7, e=0, nu0=0.9),
 
 if __name__ == "__main__":
     # Testing w/ Hohmann transfer orbits
+    # "good" values calculated on 2025.03.02.
+    max_error = 2*MISS_TOL
     transfer1 = calc_window(Kerbin.orbit, Duna.orbit, 0)
-    assert(abs(transfer1.t_launch - 5087908.78)<200)
-    assert(abs(transfer1.t_arrival - 11465565.37)<200)
+    assert(abs(transfer1.t_launch - 5087925) < max_error)
+    assert(abs(transfer1.t_arrival - 11465643) < max_error)
     transfer2 = calc_window(Kerbin.orbit, Eve.orbit, 0)
-    assert(abs(transfer2.t_launch - 11823657.05)<0.1)
-    assert(abs(transfer2.t_arrival - 15502102.85)<0.1)
+    assert(abs(transfer2.t_launch - 11823572) < max_error)
+    assert(abs(transfer2.t_arrival - 15501955) < max_error)
 
-    # LKO = orbit(Kerbin, min_alt = 70000.1, e=0)
-    # transfer3 = calc_window(LKO, Mun.orbit, 0)
-    # assert(abs(transfer3.t_arrival - 100.0)<0.1)
-    # assert(abs(transfer3.t_launch - 100.0)<0.1)
-    # print('All tests passed')
+    LKO = orbit(Kerbin, min_alt = 70000.1, e=0)
+    transfer3 = calc_window(LKO, Mun.orbit, 0)
+    assert(abs(transfer3.t_launch - 1788) < max_error)
+    assert(abs(transfer3.t_arrival - 28445) < max_error)
+    print('All tests passed')
