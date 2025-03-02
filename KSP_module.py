@@ -169,7 +169,7 @@ class orbit:
 
         # calculate orbit for visualization
         self.t = np.linspace(0, self.T, 100)
-        self.phi, self.r = self.calc_polar(self.t)
+        self.r, self.phi = self.calc_polar(self.t)
 
     # If the mechanical energy is negative, the orbit is elliptic
     def check_elliptic(self):
@@ -202,7 +202,7 @@ class orbit:
         nu = self.calc_true_anomaly(time)
         phi = self.omega + nu
         r = self.a*(1-self.e*self.e)/(1+self.e*np.cos(nu))
-        return phi,r
+        return r, phi
     
     def calc_epoch_time(self, nu0):
         """Calculate epoch time from true anomaly"""
@@ -213,15 +213,15 @@ class orbit:
     def recalc_orbit_visu(self, start_time, end_time):
         """function to recalculate orbit for visualization"""
         self.t = np.linspace(start_time, end_time, 100)
-        self.phi, self.r = self.calc_polar(self.t)
+        self.r, self.phi = self.calc_polar(self.t)
 
     def calc_speed(self, time):
-        r = self.calc_polar(time)[1]
+        r = self.calc_polar(time)[0]
         return np.sqrt(self.primary.GM*(2/r - 1/self.a))
     
     def calc_zenith_angle(self, time):
         """Calculate the angle between the velocity vector and the radius vector"""
-        r1 = self.calc_polar(time)[1]
+        r1 = self.calc_polar(time)[0]
         v1 = self.calc_speed(time)
         return np.arcsin((self.vp*self.rp) / (v1*r1))
         # nu = self.calc_true_anomaly(time)
@@ -239,7 +239,7 @@ class orbit:
     
     def calc_xyz(self, time):
         """Calculate Cartesian coordinates for a given time"""
-        phi,r = self.calc_polar(time)
+        r, phi = self.calc_polar(time)
         return np.asarray(r*np.cos(phi), r*np.sin(phi))
 
     def calc_distance_to(self, other, time):
@@ -254,7 +254,7 @@ class orbit:
     
     def do_maneuver(self, time, longitudinal_dv, lateral_dv=0, radial_dv=0):
         # radius at maneuver
-        phi, r = self.calc_polar(time)
+        r = self.calc_polar(time)[0]
         # flight path angle at maneuver
         fphi = pi/2 - self.calc_zenith_angle(time)
         # original speed at maneuver
@@ -278,7 +278,7 @@ def calc_hohmann(src_orbit, dst_orbit, t0):
     GM = primary.GM
 
     # position of src known at t0
-    phi, r_src = src_orbit.calc_polar(t0)
+    r_src = src_orbit.calc_polar(t0)[0]
     
     # initial guess for dest is using 0 time for Hohmann transfer
     hohmann_time = 0
@@ -286,7 +286,7 @@ def calc_hohmann(src_orbit, dst_orbit, t0):
 
     # Iterate a better Hohmann time by recalculating destination
     while abs(hohmann_time_prev-hohmann_time) > 1:
-        phi, r_dst = dst_orbit.calc_polar(t0+hohmann_time)
+        r_dst = dst_orbit.calc_polar(t0+hohmann_time)[0]
         # semi-major axis
         a = (r_src + r_dst) / 2
         # Time of Hohmann transfer is half of the Hohmann orbit
@@ -347,7 +347,7 @@ def calc_window(src_orbit, dst_orbit, t0):
     # delta_ang0 + (Eve.n - Kerbin.n) * t_launchdow = delta_ang
     t_launch = t0 + (d_ang - d_ang_0) / abs(dst_orbit.n - src_orbit.n)
     t_arrival = t_launch + t_h
-    ang_launch,r = src_orbit.calc_polar(t_launch)
+    ang_launch = src_orbit.calc_polar(t_launch)[1]
     # If the dest is on a lower orbit, then the SV starts from the apoapsis of the transfer orbit, 
     # so a half-orbit offset in its omega parameter and true anomaly is needed.
     if src_orbit.a > dst_orbit.a:
@@ -365,8 +365,8 @@ def calc_window(src_orbit, dst_orbit, t0):
     while abs(t_miss) > MISS_TOL:
         # calculate timing error - by how much time we've missed the target when arriving
         t_arrival = t_launch + t_h
-        ang_h = np.mod(Hohmann.calc_polar(t_arrival)[0], 2*np.pi)
-        ang_dst = np.mod(dst_orbit.calc_polar(t_arrival)[0], 2*np.pi)
+        ang_h = np.mod(Hohmann.calc_polar(t_arrival)[1], 2*np.pi)
+        ang_dst = np.mod(dst_orbit.calc_polar(t_arrival)[1], 2*np.pi)
         ang_miss = ang_h - ang_dst
         
         # modify start time using calculated error
@@ -384,7 +384,7 @@ def calc_window(src_orbit, dst_orbit, t0):
         
         # recalculate transfer orbit
         a,e,n,t_h = calc_hohmann(src_orbit, dst_orbit, t_launch)
-        ang_launch,r = src_orbit.calc_polar(t_launch)
+        ang_launch = src_orbit.calc_polar(t_launch)[1]
  
         kwargs = {'a':a, 'e':e, 'omega':(ang_launch+ang_offset)*180/pi, 't0':t_launch, 'nu0':ang_offset}
         Hohmann = orbit(primary, **kwargs)
@@ -437,7 +437,7 @@ def add_orbit_to_plot(ax, orbit, label=None):
     return ax
 
 def add_point_to_plot(ax, coordinates, label=None, marker='o'):
-    (phi, r) = coordinates
+    (r, phi) = coordinates
     ax.plot(phi, r, marker, label=label)
     ax.legend(loc=1)
     return ax
