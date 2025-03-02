@@ -1,6 +1,6 @@
 import numpy as np 
 import matplotlib.pyplot as plt
-from math import sqrt, pi, sin, cos, atan
+from math import sqrt, pi, sin, cos, atan, atan2
 
 # tolerance for Hohmann transfer calculation
 MISS_TOL = 5  # seconds
@@ -56,8 +56,7 @@ class planetary_body(body):
             return np.sqrt(self.GM/(self.radius + altitude))
         else:
             raise ValueError("Altitude is inside atmosphere")
-    
-#todo: add RAAN
+
 class orbit:
     """Default orbit is the circular orbit of Kerbin around Kerbol
     Inputs are a bit chaotic but conform to KSP's way of defining orbits:
@@ -66,6 +65,7 @@ class orbit:
     e: eccentricity
     i: inclination in degrees
     omega: argument of periapsis in degrees
+    OMEGA: RAAN in degrees
     t0: time of orbit initialization
     nu0: true anomaly at initialization in radians"""
     def __init__(self, primary, **kwargs):
@@ -74,8 +74,10 @@ class orbit:
 
         self.a = orbit_kwargs['a'] # semi-major axis
         self.e = orbit_kwargs['e'] # eccentricity
-        self.i = orbit_kwargs['i']*np.pi/180 # inclination in radians
-        self.omega = orbit_kwargs['omega']*np.pi/180 # argument of periapsis in radians
+        self.i = orbit_kwargs['i']*pi/180 # inclination in radians
+        self.omega = orbit_kwargs['omega']*pi/180 # argument of periapsis in radians
+        self.OMEGA = orbit_kwargs['OMEGA']*pi/180 # RAAN in radians
+        self.OMEGA_projected = atan2(sin(self.OMEGA)*cos(self.i), cos(self.OMEGA))
         self.t0 = orbit_kwargs['t0'] # time of orbit initialization
         
         self.T = np.sqrt(4*np.pi**2*self.a**3/self.primary.GM) # orbital period, seconds
@@ -154,6 +156,9 @@ class orbit:
 
         if 'omega' not in kwargs:
             kwargs['omega'] = 0
+        
+        if 'OMEGA' not in kwargs:
+            kwargs['OMEGA'] = 0
 
         if 't0' not in kwargs:
             kwargs['t0'] = 0
@@ -163,7 +168,7 @@ class orbit:
 
         # define orbit with only the keys expected by the orbit class
         # no check for missing keys, the orbit class will raise an error
-        orbit_input_keys = ['a', 'e', 'i', 'omega', 't0', 'nu0']
+        orbit_input_keys = ['a', 'e', 'i', 'omega', 'OMEGA', 't0', 'nu0']
         orbit_kwargs = {k:kwargs[k] for k in orbit_input_keys}
         return orbit_kwargs
 
@@ -200,7 +205,7 @@ class orbit:
     def calc_polar(self, time):
         """function to calculate both orbital distance and angle wrt reference angle"""
         nu = self.calc_true_anomaly(time)
-        phi = self.omega + nu
+        phi = self.OMEGA_projected + self.omega + nu
         r = self.a*(1-self.e*self.e)/(1+self.e*np.cos(nu))
         return r, phi
     
@@ -445,15 +450,15 @@ def add_point_to_plot(ax, coordinates, label=None, marker='o'):
 # Planetary bodies
 Moho = planetary_body('Moho', orbit(Kerbol, a=5263138304, e=0.2, omega=15, i=7, nu0=3.14),
                     GM=8.1717302e12, radius=7e5, atmo_height=9e4)
-Eve = planetary_body('Eve', orbit(Kerbol, a=9832684544, e=0.01, omega=15, i=2.1, nu0=3.14),
+Eve = planetary_body('Eve', orbit(Kerbol, a=9832684544, e=0.01, omega=0, OMEGA=15, i=2.1, nu0=3.14),
                     GM=8.1717302e12, radius=7e5, atmo_height=9e4)
 Kerbin = planetary_body('Kerbin', orbit(Kerbol, a=13599840256, e=0, nu0=3.14),
                         GM=3.5316e12, radius=6e5, atmo_height=7e4)
-Duna = planetary_body('Duna', orbit(Kerbol, a=20726155264, e=0.051, omega=135.5, i=0.06, nu0=3.14),
+Duna = planetary_body('Duna', orbit(Kerbol, a=20726155264, e=0.051, omega=0, OMEGA=135.5, i=0.06, nu0=3.14),
                         GM=3.0136321e11, radius=3.2e5, atmo_height=5e4)
 Mun = planetary_body('Mun', orbit(Kerbin, a=1.2e7, e=0, nu0=1.7),
                         GM=6.5138398e10, radius=2e5, atmo_height=0)
-Minmus = planetary_body('Minmus', orbit(Kerbin, a=4.7e7, e=0, nu0=0.9),
+Minmus = planetary_body('Minmus', orbit(Kerbin, a=4.7e7, e=0, omega=38, OMEGA=78, nu0=0.9),
                         GM=1.7658e9, radius=6e4, atmo_height=0)
 
 
@@ -462,14 +467,18 @@ if __name__ == "__main__":
     # "good" values calculated on 2025.03.02.
     max_error = 2*MISS_TOL
     transfer1 = calc_window(Kerbin.orbit, Duna.orbit, 0)
+    # print(transfer1.t_launch, transfer1.t_arrival)
     assert(abs(transfer1.t_launch - 5087925) < max_error)
     assert(abs(transfer1.t_arrival - 11465643) < max_error)
+
     transfer2 = calc_window(Kerbin.orbit, Eve.orbit, 0)
-    assert(abs(transfer2.t_launch - 11823572) < max_error)
-    assert(abs(transfer2.t_arrival - 15501955) < max_error)
+    # print(transfer2.t_launch, transfer2.t_arrival)
+    assert(abs(transfer2.t_launch - 11823939) < max_error)
+    assert(abs(transfer2.t_arrival - 15502331) < max_error)
 
     LKO = orbit(Kerbin, min_alt = 70000.1, e=0)
     transfer3 = calc_window(LKO, Mun.orbit, 0)
+    # print(transfer3.t_launch, transfer3.t_arrival)
     assert(abs(transfer3.t_launch - 1788) < max_error)
     assert(abs(transfer3.t_arrival - 28445) < max_error)
     print('All tests passed')

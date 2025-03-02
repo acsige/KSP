@@ -29,3 +29,7 @@ if __name__ == "__main__":
 LKO.do_maneuver(0,10)
     
 # %%
+omega = 1
+OMEGA = 2
+print(omega,OMEGA)
+# %%
