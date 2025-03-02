@@ -176,7 +176,6 @@ class orbit:
         return (time-self.t0)*self.n + self.nu0
 
 #todo: scipy.optimize.newton
-#todo: test function w/ calc_window
     def calc_eccentric_anomaly(self, time):
         """M: mean anomaly, e: eccentricity, E: eccentric anomaly"""
         def f(E,M,e): return E - e*np.sin(E) - M
@@ -397,14 +396,14 @@ def calc_window(src_orbit, dst_orbit, t0):
 
 def time(date):
     """Convert date to seconds for KSP. Input is a list of integers: [year, day, hour, minute, second]"""
-    return (date[0]*Kerbin.year + date[1]*60*60*6 + date[2]*60*60 + date[3]*60 + date[4])
+    return ((date[0]-1)*Kerbin.year + (date[1]-1)*60*60*6 + date[2]*60*60 + date[3]*60 + date[4])
 
 def date(time):
-    """Convert seconds to date for KSP. Output is a list of integers: [year, day, hour, minute, second]"""
-    #TODO: check if the year is correct
-    year = time // Kerbin.year
+    """Convert seconds to date for KSP. Output is a list of integers: [year, day, hour, minute, second]
+    Game starts at Year 1, Day 1, 0 h 0 m 0 s"""
+    year = time // Kerbin.year + 1
     time = time % Kerbin.year
-    day = time//(60*60*6)
+    day = time//(60*60*6) + 1
     time = time%(60*60*6)
     hour = time//(60*60)
     time = time%(60*60)
