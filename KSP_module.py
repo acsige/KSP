@@ -416,7 +416,7 @@ def date(time):
 
 def pretty_date(time):
     [year, day, hour, minute, second] = date(time)
-    return f'{year:.0f} y {day:.0f} d {hour:.0f} h {minute:.0f} m {second:.0f} s'
+    return f'Y{year:.0f} D{day:.0f} {hour:02.0f}:{minute:02.0f}:{second:02.0f}'
 
 def initialize_plot():
     fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
