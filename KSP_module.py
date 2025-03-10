@@ -352,7 +352,6 @@ def calc_window(src_orbit, dst_orbit, t0):
     if d_ang_0 > d_ang:
         d_ang = d_ang + 2*pi
     # time until next position
-    # delta_ang0 + (Eve.n - Kerbin.n) * t_launchdow = delta_ang
     t_launch = t0 + (d_ang - d_ang_0) / abs(dst_orbit.n - src_orbit.n)
     t_arrival = t_launch + t_h
     ang_launch = src_orbit.calc_polar(t_launch)[1]
