@@ -26,10 +26,8 @@ if __name__ == "__main__":
     plt.show()
     print([ksp.pretty_date(transfer3.t_launch), transfer3.t_launch])
 # %%
-LKO.do_maneuver(0,10)
-    
+print(transfer1.calc_xyz(transfer1.t_arrival)-Duna.orbit.calc_xyz(transfer1.t_arrival))
 # %%
-omega = 1
-OMEGA = 2
-print(omega,OMEGA)
+print(transfer3.vp - Kerbin.calc_orbital_velocity(transfer3.min_alt))
+print(transfer3.dv)
 # %%

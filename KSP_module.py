@@ -209,6 +209,14 @@ class orbit:
         r = self.a*(1-self.e*self.e)/(1+self.e*np.cos(nu))
         return r, phi
     
+    def calc_xyz(self, time):
+        """Calculate Cartesian coordinates for a given time"""
+        r, phi = self.calc_polar(time)
+        x = r*np.cos(phi)
+        y = r*np.sin(phi)*cos(self.i)
+        z = r*np.sin(phi)*sin(self.i)
+        return np.asarray([x,y,z])
+
     def calc_epoch_time(self, nu0):
         """Calculate epoch time from true anomaly"""
         E0 = np.arccos((self.e+np.cos(nu0)) / (1+self.e*np.cos(nu0)))
@@ -241,11 +249,6 @@ class orbit:
         """Calculate the delta-v needed for circularization burn at periapsis""" 
         v_target = np.sqrt(self.primary.GM/self.rp)
         return self.vp - v_target
-    
-    def calc_xyz(self, time):
-        """Calculate Cartesian coordinates for a given time"""
-        r, phi = self.calc_polar(time)
-        return np.asarray(r*np.cos(phi), r*np.sin(phi))
 
     def calc_distance_to(self, other, time):
         """Calculate distance between two objects at a given time"""
@@ -400,6 +403,7 @@ def calc_window(src_orbit, dst_orbit, t0):
     Hohmann.t_launch = t_launch
     Hohmann.t_arrival = t_arrival
     Hohmann.is_hohmann = True
+    Hohmann.dv = Hohmann.calc_speed(t_launch) - src_orbit.calc_speed(t_launch)  # delta-v needed for transfer
     return Hohmann
 
 def time(date):
