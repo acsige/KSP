@@ -253,6 +253,36 @@ class orbit:
             raise(TypeError)
         return np.linalg.norm(self.calc_xyz(time)-other_orbit.calc_xyz(time))
     
+    # TODO: implement tests
+    # ideas for testing: minimum distance to primary at periapsis
+    # minimum distance from LKO to Mun at the same phase angle
+    def calc_min_distance_to(self, other, t_start, t_end):
+        """Calculate minimum distance between two objects during a given time interval
+        Args:
+            other: other object (body or orbit)
+            t_start: start time
+            t_end: end time
+        Returns:
+            t: time of minimum distance
+            d: minimum distance"""
+        TOL = 1 # tolerance for time error
+
+        t1, t2, delta_t = t_start, t_end, t_end - t_start
+        d1 = self.calc_distance_to(other, t1)
+        d2 = self.calc_distance_to(other, t2)
+
+        while delta_t > TOL:
+            t = (t1 + t2) / 2
+            d = self.calc_distance_to(other, t)
+            if d1 < d2:
+                t2 = t
+                d2 = d
+            else:
+                t1 = t
+                d1 = d
+            delta_t = t2 - t1
+        return t, d
+    
     def do_maneuver(self, time, longitudinal_dv, lateral_dv=0, radial_dv=0):
         # radius at maneuver
         r = self.calc_polar(time)[0]
@@ -269,3 +299,26 @@ class orbit:
         mu = atan( r*v**2/self.primary.GM*cos(fphi)*sin(fphi) / 
                   (r*v**2/self.primary.GM*cos(fphi)**2 - 1) )
         return a,e,mu
+    
+    def calc_soi_change(self, t0, n_orbits = 10):
+        """Calculate the time of SOI change and the new primary
+        Args:
+            t0: time of calculation
+            n_orbits: number of orbits to calculate
+        Returns:
+            t_change: time of SOI change
+            new_primary: new primary body"""
+        
+        # check if current orbit is elliptic or hyperbolic
+
+        # if hyperbolic, calculate time when leaving primary SOI and use it for iteration
+        # if elliptic, loop through orbits between ap and pe
+        
+        # calculate minimum distance to all secondaries during transit time
+
+            # check if minimum distances are smaller than SOI radii
+            # if yes, calculate time of SOI change for first one
+        pass
+
+
+    """function to initialize orbit from a state vector"""

@@ -62,6 +62,14 @@ def add_orbit_to_plot(ax, orbit, label=None):
     ax.legend(loc=1)
     return ax
 
+def add_orbit_point_to_plot(ax, orbit, time, label=None, marker='o'):
+    if label is None:
+        label = f'{orbit.primary.__name__} orbit'
+    (r, phi) = orbit.calc_polar(time)
+    ax.plot(phi, r, marker, label=label)
+    ax.legend(loc=1)
+    return ax
+
 def add_point_to_plot(ax, coordinates, label=None, marker='o'):
     (r, phi) = coordinates
     ax.plot(phi, r, marker, label=label)
