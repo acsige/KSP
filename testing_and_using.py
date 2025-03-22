@@ -25,14 +25,19 @@ if __name__ == "__main__":
     plt.show()
     print([ksp.pretty_date(transfer3.t_launch), transfer3.t_launch])
 # %%
-LKOe = ksp.orbit(Kerbin, min_alt = 70000.1, e=0.5)
-t1,d1 = LKOe.calc_min_distance_to(Kerbin, 0, LKOe.T/2)
-t2,d2 = LKOe.calc_min_distance_to(Kerbin, LKOe.T/2, LKOe.T)
+LKOe = ksp.orbit(Kerbin, min_alt = 70000.1, e=0.2, nu0=1)
+t1,d1 = LKOe.calc_min_distance_to(Kerbin, LKOe.T/2, LKOe.T)
 print(t1,d1)
 fig,ax = ksp.initialize_plot()
 ax = ksp.add_orbit_to_plot(ax, LKOe)
-ax = ksp.add_orbit_point_to_plot(ax, LKOe, 0, label='t0', marker='X')
+ax = ksp.add_orbit_point_to_plot(ax, LKOe, LKOe.t_epoch, label='t_epoch', marker='X')
+ax = ksp.add_orbit_point_to_plot(ax, LKOe, 0, label='0', marker='X')
+# ax = ksp.add_orbit_point_to_plot(ax, LKOe, LKOe.T/2, label='T/2', marker='X')
+# ax = ksp.add_orbit_point_to_plot(ax, LKOe, LKOe.T, label='T', marker='X')
 ax = ksp.add_orbit_point_to_plot(ax, LKOe, t1, label='t1', marker='o')
 
-
-
+# %%
+print(LKOe.t_epoch)
+print(LKOe.t0)
+print(LKOe.T)
+# %%

@@ -33,7 +33,7 @@ r2,p2 = LKO.calc_polar(t)
 #phase angle error less than 0.2 degrees
 assert(abs(p2-p1)*180/pi < 0.2)
 #distance error less than 2m
-assert(abs(r2-r1-d) < 2)
+assert(abs(r1-r2-d) < 2)
 
 #TODO: Testing that minimum distance is at periapsis
 

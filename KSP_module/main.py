@@ -165,10 +165,6 @@ class orbit:
         orbit_kwargs = {k:kwargs[k] for k in orbit_input_keys}
         return orbit_kwargs
 
-        # calculate orbit for visualization
-        self.t = np.linspace(0, self.T, 100)
-        self.r, self.phi = self.calc_polar(self.t)
-
     # If the mechanical energy is negative, the orbit is elliptic
     def check_elliptic(self):
         return self.vp**2/2-self.primary.GM/self.rp < 0
@@ -176,7 +172,6 @@ class orbit:
     def calc_mean_anomaly(self, time):
         return (time-self.t0)*self.n + self.nu0
 
-#todo: scipy.optimize.newton
     def calc_eccentric_anomaly(self, time):
         """M: mean anomaly, e: eccentricity, E: eccentric anomaly"""
         def f(E,M,e): return E - e*np.sin(E) - M
@@ -252,10 +247,13 @@ class orbit:
         else:
             raise(TypeError)
         
-        # TODO: what to do if self and other has different primaries?
-        assert(self.primary == other_orbit.primary), "Objects have different primaries"
-
-        return np.linalg.norm(self.calc_xyz(time)-other_orbit.calc_xyz(time))
+        if self.primary == other_orbit.primary:
+            return np.linalg.norm(self.calc_xyz(time)-other_orbit.calc_xyz(time))
+        elif self.primary == other:
+            r,phi = self.calc_polar(time)
+            return r
+        else:
+            raise ValueError("Usecase not implemented")
     
     def calc_min_distance_to(self, other, t_start, t_end):
         """Calculate minimum distance between two objects during a given time interval
@@ -282,8 +280,6 @@ class orbit:
                 t1 = t
                 d1 = d
             delta_t = t2 - t1
-
-            print(t, d)
         return t, d
     
     def do_maneuver(self, time, longitudinal_dv, lateral_dv=0, radial_dv=0):
