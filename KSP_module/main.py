@@ -251,11 +251,12 @@ class orbit:
             other_orbit = other.orbit
         else:
             raise(TypeError)
+        
+        # TODO: what to do if self and other has different primaries?
+        assert(self.primary == other_orbit.primary), "Objects have different primaries"
+
         return np.linalg.norm(self.calc_xyz(time)-other_orbit.calc_xyz(time))
     
-    # TODO: implement tests
-    # ideas for testing: minimum distance to primary at periapsis
-    # minimum distance from LKO to Mun at the same phase angle
     def calc_min_distance_to(self, other, t_start, t_end):
         """Calculate minimum distance between two objects during a given time interval
         Args:
@@ -281,6 +282,8 @@ class orbit:
                 t1 = t
                 d1 = d
             delta_t = t2 - t1
+
+            print(t, d)
         return t, d
     
     def do_maneuver(self, time, longitudinal_dv, lateral_dv=0, radial_dv=0):

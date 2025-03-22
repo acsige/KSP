@@ -25,18 +25,14 @@ if __name__ == "__main__":
     plt.show()
     print([ksp.pretty_date(transfer3.t_launch), transfer3.t_launch])
 # %%
-LKO = ksp.orbit(Kerbin, min_alt = 70000.1, e=0)
-t,d = LKO.calc_min_distance_to(Mun, 0, LKO.T)
+LKOe = ksp.orbit(Kerbin, min_alt = 70000.1, e=0.5)
+t1,d1 = LKOe.calc_min_distance_to(Kerbin, 0, LKOe.T/2)
+t2,d2 = LKOe.calc_min_distance_to(Kerbin, LKOe.T/2, LKOe.T)
+print(t1,d1)
 fig,ax = ksp.initialize_plot()
-ax = ksp.add_orbit_to_plot(ax, LKO)
-ax = ksp.add_orbit_to_plot(ax, Mun.orbit)
-ax = ksp.add_orbit_point_to_plot(ax, Mun.orbit, t, label='Mun at minimum distance', marker='o')
-ax = ksp.add_orbit_point_to_plot(ax, LKO, t, label='SV at minimum distance', marker='o')
-# %%
-LKO = ksp.orbit(Kerbin, min_alt = 70000.1, e=0)
-t,d = LKO.calc_min_distance_to(Mun, 0, LKO.T)
-r1,p1 = Mun.orbit.calc_polar(t)
-r2,p2 = LKO.calc_polar(t)
-print(abs(p2-p1)*180/pi)
-print(abs(r2-r1)-d)
-# %%
+ax = ksp.add_orbit_to_plot(ax, LKOe)
+ax = ksp.add_orbit_point_to_plot(ax, LKOe, 0, label='t0', marker='X')
+ax = ksp.add_orbit_point_to_plot(ax, LKOe, t1, label='t1', marker='o')
+
+
+

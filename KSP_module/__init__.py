@@ -25,4 +25,16 @@ transfer3 = calc_window(LKO, Mun.orbit, 0)
 # print(transfer3.t_launch, transfer3.t_arrival)
 assert(abs(transfer3.t_launch - 1788) < max_error)
 assert(abs(transfer3.t_arrival - 28445) < max_error)
+
+# Testing minimum distance calculation w/ LKO and Mun
+t,d = LKO.calc_min_distance_to(Mun, 0, LKO.T)
+r1,p1 = Mun.orbit.calc_polar(t)
+r2,p2 = LKO.calc_polar(t)
+#phase angle error less than 0.2 degrees
+assert(abs(p2-p1)*180/pi < 0.2)
+#distance error less than 2m
+assert(abs(r2-r1-d) < 2)
+
+#TODO: Testing that minimum distance is at periapsis
+
 print('All tests passed')
