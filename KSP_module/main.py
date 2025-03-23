@@ -76,7 +76,7 @@ class orbit:
         self.T = np.sqrt(4*np.pi**2*self.a**3/self.primary.GM) # orbital period, seconds
         self.n = 2*np.pi/self.T # angular velocity, rad/s
         if orbit_kwargs['nu0'] == 0:
-            self.t_epoch = self.t0
+            self.t_epoch = self.t0  # time of periapsis passage
         else:
             self.t_epoch = self.calc_epoch_time(orbit_kwargs['nu0'])
         self.nu0 = orbit_kwargs['nu0'] # true anomaly at epoch
@@ -249,8 +249,10 @@ class orbit:
         else:
             raise(TypeError)
         
+        # if both orbits are around the same primary
         if self.primary == other_orbit.primary:
             return np.linalg.norm(self.calc_xyz(time)-other_orbit.calc_xyz(time))
+        # if one of the orbits is around the other
         elif self.primary == other:
             r,phi = self.calc_polar(time)
             return r

@@ -29,7 +29,6 @@ for key, value in transfer_dict.items():
     assert(abs(t_arrival - t_arrival_ref) < max_error), f'{key} t_arrival: {t_arrival:.2f}, ref: {t_arrival_ref:.2f}'
 
 # Testing minimum distance calculation w/ LKO and Mun
-LKO = orbit(Kerbin, min_alt = 70000.1, e=0)
 t,d = LKO.calc_min_distance_to(Mun, 0, LKO.T)
 r1,p1 = Mun.orbit.calc_polar(t)
 r2,p2 = LKO.calc_polar(t)
@@ -38,6 +37,20 @@ assert(abs(p2-p1)*180/pi < 0.2)
 #distance error less than 2m
 assert(abs(r1-r2-d) < 2)
 
-#TODO: Testing that minimum distance is at periapsis
+#Testing that minimum distance is at periapsis
+LKOe = orbit(Kerbin, min_alt = 70000.1, e=0.2, nu0=pi)
+t,d = LKOe.calc_min_distance_to(Kerbin, 0, LKOe.T)
+p = LKOe.calc_polar(t)[1]
+ref_t = LKOe.T/2
+ref_d = LKOe.min_alt + Kerbin.radius
+ref_p = 0
+#phase angle error less than 0.2 degrees
+angle_error = (abs(p-ref_p)*180/pi)
+angle_error = min(angle_error, 360-angle_error)
+assert(angle_error < 0.2), f'phase angle: {p:.2f}, ref: {ref_p:.2f}'
+#distance error less than 2m
+assert(abs(d-ref_d) < 2), f'distance: {d:.2f}, ref: {ref_d:.2f}'
+#time error less than 2s
+assert(abs(t-ref_t) < 2), f'time: {t:.2f}, ref: {ref_t:.2f}'
 
 print('All tests passed')
