@@ -1,3 +1,4 @@
+import numpy as np
 import matplotlib.pyplot as plt
 plt.rc("figure", figsize=[12,8])
 plt.rc("grid", linestyle="--")
@@ -8,12 +9,12 @@ def plot_hohmann_orbit(src, dst, transfer_orbit):
     """Plot Hohmann transfer, 0: source body, 1: destination body, 2: transfer orbit """
     fig,ax = initialize_plot()
     if isinstance(src, planetary_body):
-        ax = add_planetary_body_to_plot(ax, src)
+        ax = add_planetary_orbit_to_plot(ax, src)
     else:
         ax = add_orbit_to_plot(ax, src)
 
     if isinstance(dst, planetary_body):
-        ax = add_planetary_body_to_plot(ax, dst)
+        ax = add_planetary_orbit_to_plot(ax, dst)
     else:
         ax = add_orbit_to_plot(ax, dst)
 
@@ -50,7 +51,7 @@ def initialize_plot():
     ax.set_yticklabels([])  # Hide radial labels
     return fig, ax
 
-def add_planetary_body_to_plot(ax, body):
+def add_planetary_orbit_to_plot(ax, body):
     ax.plot(body.orbit.phi, body.orbit.r, label=body.__name__)
     ax.legend(loc=1)
     return ax
@@ -67,6 +68,37 @@ def add_orbit_point_to_plot(ax, orbit, time, label=None, marker='o'):
         label = f'{orbit.primary.__name__} orbit'
     (r, phi) = orbit.calc_polar(time)
     ax.plot(phi, r, marker, label=label)
+    ax.legend(loc=1)
+    return ax
+
+def calc_circle_for_polar(r0, phi0, r):
+    phi = np.linspace(0, 2*np.pi, 100)
+    dx = r*np.cos(phi)
+    x = dx + r0*np.cos(phi0)
+    dy = r*np.sin(phi)
+    y = dy + r0*np.sin(phi0)
+    r_draw = np.sqrt(x**2 + y**2)
+    phi_draw = np.arctan2(y, x)
+    return r_draw, phi_draw
+
+def add_soi_to_plot(ax, planetary_body, time):
+    (r, phi) = planetary_body.orbit.calc_polar(time)
+    label=f'{planetary_body.__name__} SOI'
+    soi_r = planetary_body.soi
+    soi_r_draw, soi_phi_draw = calc_circle_for_polar(r, phi, soi_r)
+    ax.plot(soi_phi_draw, soi_r_draw, label=label)
+    ax.legend(loc=1)
+    return ax
+
+def add_planetary_body_to_plot(ax, planetary_body, time, origin = False):
+    if origin:
+        r, phi = 0, 0
+    else:
+        (r, phi) = planetary_body.orbit.calc_polar(time)
+    label=f'{planetary_body.__name__}'
+    r_body = planetary_body.radius
+    r_draw, phi_draw = calc_circle_for_polar(r, phi, r_body)
+    ax.plot(phi_draw, r_draw, label=label)
     ax.legend(loc=1)
     return ax
 

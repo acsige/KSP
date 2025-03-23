@@ -303,11 +303,11 @@ class orbit:
                   (r*v**2/self.primary.GM*cos(fphi)**2 - 1) )
         return a,e,mu
     
-    def calc_soi_change(self, t0, n_orbits = 10):
+    #TODO: implement function to calculate time of SOI change
+    def calc_soi_change(self, t0):
         """Calculate the time of SOI change and the new primary
         Args:
             t0: time of calculation
-            n_orbits: number of orbits to calculate
         Returns:
             t_change: time of SOI change
             new_primary: new primary body"""
@@ -315,7 +315,7 @@ class orbit:
         # check if current orbit is elliptic or hyperbolic
 
         # if hyperbolic, calculate time when leaving primary SOI and use it for iteration
-        # if elliptic, loop through orbits between ap and pe
+        # if elliptic, end time is t0 + T
         
         # calculate minimum distance to all secondaries during transit time
 
