@@ -317,6 +317,54 @@ class orbit:
                 t_end = t
 
         return t
+    
+    def calc_soi_change(self, t_start):
+        """Calculate the time of SOI change and the new primary
+        Args:
+            t0: start time of calculation
+        Returns:
+            t_change: time of SOI change
+            new_primary: new primary body"""
+        
+        # if the orbit is  hyperbolic or highly eccentric, 
+        # calculate time when leaving primary SOI 
+        if self.check_hyperbolic() or self.ra > self.primary.soi:
+            t_end = t_start + self.calc_soi_leave_time()
+        # if elliptic and fully inside SOI, calc is for one orbit starting at t0
+        else:
+            t_end = t_start + self.T
+        
+        # calculate minimum distance to all secondaries during transit time
+        closest_secondary = None
+        t_soi_change = t_end
+        for secondary in self.primary.secondaries:
+            t_min,d_min = self.calc_min_distance(secondary, t_start, t_end)
+            if d_min < secondary.soi:
+                t_soi, d_soi = self.calc_soi_enter(secondary, t_start, t_min)
+                if t_soi < t_soi_change:
+                    t_soi_change = t_soi
+                    closest_secondary = secondary
+        return t_soi_change, closest_secondary
+
+    def calc_soi_enter(self, secondary, t_start, t_min):
+        """Calculate the time of entering a secondary's SOI
+        Args:
+            secondary: secondary body
+            t_start: start time of calculation
+            t_min: time of minimum distance to secondary
+        Returns:
+            t_soi: time of SOI change
+        """
+        
+        t1 = t_start
+        t2 = t_min
+        while abs(t2-t1) > 1:
+            t = (t1 + t2)/2
+            if self.calc_distance_to(secondary, t) < secondary.soi:
+                t2 = t
+            else:
+                t1 = t
+        return t
 
     def do_maneuver(self, time, longitudinal_dv, lateral_dv=0, radial_dv=0):
         # radius at maneuver
