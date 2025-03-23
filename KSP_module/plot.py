@@ -81,21 +81,21 @@ def calc_circle_for_polar(r0, phi0, r):
     phi_draw = np.arctan2(y, x)
     return r_draw, phi_draw
 
-def add_soi_to_plot(ax, planetary_body, time):
+def add_soi_to_plot(ax, planetary_body, time, label=None):
     (r, phi) = planetary_body.orbit.calc_polar(time)
-    label=f'{planetary_body.__name__} SOI'
     soi_r = planetary_body.soi
     soi_r_draw, soi_phi_draw = calc_circle_for_polar(r, phi, soi_r)
+    if label: label=f'{planetary_body.__name__} SOI'
     ax.plot(soi_phi_draw, soi_r_draw, label=label)
     ax.legend(loc=1)
     return ax
 
-def add_planetary_body_to_plot(ax, planetary_body, time, origin = False):
+def add_planetary_body_to_plot(ax, planetary_body, time, origin = False, label=None):
     if origin:
         r, phi = 0, 0
     else:
         (r, phi) = planetary_body.orbit.calc_polar(time)
-    label=f'{planetary_body.__name__}'
+    if label: label=f'{planetary_body.__name__}'
     r_body = planetary_body.radius
     r_draw, phi_draw = calc_circle_for_polar(r, phi, r_body)
     ax.plot(phi_draw, r_draw, label=label)
