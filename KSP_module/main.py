@@ -170,7 +170,8 @@ class orbit:
         return self.vp**2/2-self.primary.GM/self.rp < 0
 
     def calc_mean_anomaly(self, time):
-        return (time-self.t0)*self.n + self.nu0
+        # return (time-self.t0)*self.n + self.nu0
+        return (time-self.t_epoch)*self.n
 
     def calc_eccentric_anomaly(self, time):
         """M: mean anomaly, e: eccentricity, E: eccentric anomaly"""
@@ -207,7 +208,8 @@ class orbit:
 
     def calc_epoch_time(self, nu0):
         """Calculate epoch time from true anomaly"""
-        E0 = np.arccos((self.e+np.cos(nu0)) / (1+self.e*np.cos(nu0)))
+        # E0 = np.arccos((self.e+np.cos(nu0)) / (1+self.e*np.cos(nu0)))
+        E0 = 2*np.arctan(np.tan(nu0/2)/np.sqrt((1+self.e)/(1-self.e)))
         M0 = E0 - self.e*np.sin(E0)
         return self.t0-M0/self.n
 

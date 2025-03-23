@@ -5,7 +5,7 @@ plt.rc("font", size=8)
 from math import pi
 import KSP_module as ksp
 from KSP_module import Kerbol, Kerbin, Duna, Eve, Mun, Minmus
-
+#%%
 # Testing during development
 if __name__ == "__main__":
     # Plotting Hohmann transfer orbits
@@ -25,16 +25,16 @@ if __name__ == "__main__":
     plt.show()
     print([ksp.pretty_date(transfer3.t_launch), transfer3.t_launch])
 # %%
-LKOe = ksp.orbit(Kerbin, min_alt = 70000.1, e=0.2, nu0=1)
+LKOe = ksp.orbit(Kerbin, min_alt = 70000.1, e=0.2, nu0=2)
 t1,d1 = LKOe.calc_min_distance_to(Kerbin, LKOe.T/2, LKOe.T)
 print(t1,d1)
 fig,ax = ksp.initialize_plot()
 ax = ksp.add_orbit_to_plot(ax, LKOe)
 ax = ksp.add_orbit_point_to_plot(ax, LKOe, LKOe.t_epoch, label='t_epoch', marker='X')
-ax = ksp.add_orbit_point_to_plot(ax, LKOe, 0, label='0', marker='X')
+ax = ksp.add_orbit_point_to_plot(ax, LKOe, LKOe.t0, label='t0', marker='X')
 # ax = ksp.add_orbit_point_to_plot(ax, LKOe, LKOe.T/2, label='T/2', marker='X')
 # ax = ksp.add_orbit_point_to_plot(ax, LKOe, LKOe.T, label='T', marker='X')
-ax = ksp.add_orbit_point_to_plot(ax, LKOe, t1, label='t1', marker='o')
+# ax = ksp.add_orbit_point_to_plot(ax, LKOe, t1, label='t1', marker='o')
 
 # %%
 print(LKOe.t_epoch)

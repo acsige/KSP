@@ -6,27 +6,30 @@ from KSP_module.hohmann import *
 from KSP_module.plot import *
 
 print("KSP module loaded")
-
-# Testing w/ Hohmann transfer orbits
-# "good" values calculated on 2025.03.02.
+# Testing many things w/ Hohmann transfer orbits
+# reference values calculated on 2025.03.23.
 max_error = 2*MISS_TOL
-transfer1 = calc_window(Kerbin.orbit, Duna.orbit, 0)
-# print(transfer1.t_launch, transfer1.t_arrival)
-assert(abs(transfer1.t_launch - 5087925) < max_error)
-assert(abs(transfer1.t_arrival - 11465643) < max_error)
-
-transfer2 = calc_window(Kerbin.orbit, Eve.orbit, 0)
-# print(transfer2.t_launch, transfer2.t_arrival)
-assert(abs(transfer2.t_launch - 11823939) < max_error)
-assert(abs(transfer2.t_arrival - 15502331) < max_error)
-
 LKO = orbit(Kerbin, min_alt = 70000.1, e=0)
+transfer1 = calc_window(Kerbin.orbit, Duna.orbit, 0)
+transfer2 = calc_window(Kerbin.orbit, Eve.orbit, 0)
 transfer3 = calc_window(LKO, Mun.orbit, 0)
-# print(transfer3.t_launch, transfer3.t_arrival)
-assert(abs(transfer3.t_launch - 1788) < max_error)
-assert(abs(transfer3.t_arrival - 28445) < max_error)
+
+transfer_dict = {
+    'Duna': (transfer1, 5087172.63, 11464758.91),
+    'Eve': (transfer2, 11824011.22, 15502404.90),
+    'Mun': (transfer3, 1788.19, 28445.34)
+}
+
+for key, value in transfer_dict.items():
+    t_launch = value[0].t_launch
+    t_arrival = value[0].t_arrival
+    t_launch_ref = value[1]
+    t_arrival_ref = value[2]
+    assert(abs(t_launch - t_launch_ref) < max_error), f'{key} t_launch: {t_launch:.2f}, ref: {t_launch_ref:.2f}'
+    assert(abs(t_arrival - t_arrival_ref) < max_error), f'{key} t_arrival: {t_arrival:.2f}, ref: {t_arrival_ref:.2f}'
 
 # Testing minimum distance calculation w/ LKO and Mun
+LKO = orbit(Kerbin, min_alt = 70000.1, e=0)
 t,d = LKO.calc_min_distance_to(Mun, 0, LKO.T)
 r1,p1 = Mun.orbit.calc_polar(t)
 r2,p2 = LKO.calc_polar(t)
