@@ -296,7 +296,7 @@ class orbit:
         Returns:
             t_leave: time when spacecraft leaves the SOI"""
 
-        # find initial t_end outside of SOI
+        # find initial t_end outside of SOI with timesteps doubling until outside
         dt = 1
         t_end = t_start + dt
         r_end = self.calc_polar(t_end)[0]
@@ -306,17 +306,15 @@ class orbit:
             t_end += dt
             r_end = self.calc_polar(t_end)[0]
 
-        # find time when spacecraft leaves SOI
-        r_start = self.calc_polar(t_start)[0]
-        while abs(r_end - r_soi) > 1:
+        # find time when spacecraft leaves SOI with bisect method
+        r = r_end
+        while abs(r - r_soi) > 1:
             t = (t_start + t_end) / 2
             r = self.calc_polar(t)[0]
             if r < r_soi:
                 t_start = t
-                r_start = r
             else:
                 t_end = t
-                r_end = r
 
         return t
 
