@@ -169,6 +169,9 @@ class orbit:
     def check_elliptic(self):
         return self.vp**2/2-self.primary.GM/self.rp < 0
 
+    def check_hyperbolic(self):
+        return not(self.check_elliptic())
+
     def calc_mean_anomaly(self, time):
         # return (time-self.t0)*self.n + self.nu0
         return (time-self.t_epoch)*self.n
@@ -286,6 +289,37 @@ class orbit:
             delta_t = t2 - t1
         return t, d
     
+    def calc_soi_leave_time(self, t_start):
+        """Calculate the time when the spacecraft leaves the SOI of the primary body
+        Args:
+            t_start: start time of calculation
+        Returns:
+            t_leave: time when spacecraft leaves the SOI"""
+
+        # find initial t_end outside of SOI
+        dt = 1
+        t_end = t_start + dt
+        r_end = self.calc_polar(t_end)[0]
+        r_soi = self.primary.soi
+        while r_end < r_soi:
+            dt *= 2
+            t_end += dt
+            r_end = self.calc_polar(t_end)[0]
+
+        # find time when spacecraft leaves SOI
+        r_start = self.calc_polar(t_start)[0]
+        while abs(r_end - r_soi) > 1:
+            t = (t_start + t_end) / 2
+            r = self.calc_polar(t)[0]
+            if r < r_soi:
+                t_start = t
+                r_start = r
+            else:
+                t_end = t
+                r_end = r
+
+        return t
+
     def do_maneuver(self, time, longitudinal_dv, lateral_dv=0, radial_dv=0):
         # radius at maneuver
         r = self.calc_polar(time)[0]
@@ -307,7 +341,7 @@ class orbit:
     def calc_soi_change(self, t0):
         """Calculate the time of SOI change and the new primary
         Args:
-            t0: time of calculation
+            t0: start time of calculation
         Returns:
             t_change: time of SOI change
             new_primary: new primary body"""
