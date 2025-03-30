@@ -132,13 +132,11 @@ class orbit:
             kwargs['a'] = (kwargs['rp'] + kwargs['ra']) / 2
             kwargs['e'] = (kwargs['ra'] - kwargs['rp']) / (kwargs['ra'] + kwargs['rp'])
 
-        if 'rp' in kwargs and 'e' in kwargs:
-            assert('a' not in kwargs)
+        if 'rp' in kwargs and 'e' in kwargs and 'a' not in kwargs:
             assert('ra' not in kwargs)
             kwargs['a'] = kwargs['rp'] / (1 - kwargs['e'])
 
-        if 'ra' in kwargs and 'e' in kwargs:
-            assert('a' not in kwargs)
+        if 'ra' in kwargs and 'e' in kwargs and 'a' not in kwargs:
             assert('rp' not in kwargs)
             kwargs['a'] = kwargs['ra'] / (1 + kwargs['e'])
             

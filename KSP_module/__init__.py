@@ -7,7 +7,6 @@ from KSP_module.plot import *
 
 print("KSP module loaded")
 # Testing many things w/ Hohmann transfer orbits
-# reference values calculated on 2025.03.23.
 max_error = 2*MISS_TOL
 LKO = orbit(Kerbin, min_alt = 70000.1, e=0)
 transfer1 = calc_window(Kerbin.orbit, Duna.orbit, 0)
@@ -15,8 +14,11 @@ transfer2 = calc_window(Kerbin.orbit, Eve.orbit, 0)
 transfer3 = calc_window(LKO, Mun.orbit, 0)
 
 transfer_dict = {
-    'Duna': (transfer1, 5087172.63, 11464758.91),
+    # reference values calculated on 2025.03.30.
+    'Duna': (transfer1, 5087190.73, 11464782.67),
+    # reference values calculated on 2025.03.23.
     'Eve': (transfer2, 11824011.22, 15502404.90),
+    # reference values calculated on 2025.03.23.
     'Mun': (transfer3, 1788.19, 28445.34)
 }
 
