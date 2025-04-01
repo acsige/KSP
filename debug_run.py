@@ -1,6 +1,8 @@
 import KSP_module as ksp
-from KSP_module import Kerbol, Kerbin, Duna, Eve, Mun, Minmus, Moho
+from KSP_module import Kerbol, Kerbin, Duna, Eve, Mun, Minmus, Moho, Jool, Dres
 
-transfer = ksp.calc_window(Kerbin.orbit, Moho.orbit, 6717200.0)
+print(ksp.time([2, 1, 0, 0, 0]))  # Y2 D1 00:00:00
+# transfer = ksp.calc_window(Kerbin.orbit, Jool.orbit, 4139600)
+transfer = ksp.calc_window(Kerbin.orbit, Dres.orbit, ksp.time([2, 1, 0, 0, 0]))
 
-print(ksp.pretty_date(transfer.t_launch))
+print(f'{ksp.pretty_date(transfer.t_launch)}, {transfer.t_launch}')

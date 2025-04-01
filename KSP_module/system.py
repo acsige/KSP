@@ -11,6 +11,10 @@ Kerbin = planetary_body('Kerbin', orbit(Kerbol, a=13599840256, e=0, nu0=3.14),
                         GM=3.5316e12, radius=6e5, atmo_height=7e4)
 Duna = planetary_body('Duna', orbit(Kerbol, a=20726155264, e=0.051, omega=0, OMEGA=135.5, i=0.06, nu0=3.14),
                         GM=3.0136321e11, radius=3.2e5, atmo_height=5e4)
+Dres = planetary_body('Dres', orbit(Kerbol, a=40839348203, e=0.145, omega=90, OMEGA=280, i=5.0, nu0=3.14),
+                        GM=2.1484489e10, radius=1.38e5, atmo_height=0)
+Jool = planetary_body('Jool', orbit(Kerbol, a=68773560320, e=0.05, omega=0, OMEGA=52, i=1.304, nu0=0.1),
+                        GM=2.82528e14, radius=6e6, atmo_height=2e5)
 Mun = planetary_body('Mun', orbit(Kerbin, a=1.2e7, e=0, nu0=1.7),
                         GM=6.5138398e10, radius=2e5, atmo_height=0)
 Minmus = planetary_body('Minmus', orbit(Kerbin, a=4.7e7, e=0, omega=38, OMEGA=78, nu0=0.9),
