@@ -112,5 +112,7 @@ def calc_window(src_orbit, dst_orbit, t0):
     
     # Prepare output
     Hohmann.recalc_orbit_visu(Hohmann.t_launch,Hohmann.t_arrival)
-    Hohmann.dv = Hohmann.calc_speed(t_launch) - src_orbit.calc_speed(t_launch)  # delta-v needed for transfer
+    Hohmann.leave_dv = Hohmann.calc_speed(t_launch) - src_orbit.calc_speed(t_launch)  # delta-v needed for transfer
+    Hohmann.src_body = src_orbit.primary
+    Hohmann.dst_body = dst_orbit.primary
     return Hohmann

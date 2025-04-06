@@ -325,24 +325,38 @@ class orbit:
             new_primary: new primary body"""
         
         # if the orbit is  hyperbolic or highly eccentric, 
-        # calculate time when leaving primary SOI 
+        # calculate time when leaving primary SOI
         if self.check_hyperbolic() or self.ra > self.primary.soi:
             t_end = t_start + self.calc_soi_leave_time()
+            is_leaving = True
         # if elliptic and fully inside SOI, calc is for one orbit starting at t0
         else:
             t_end = t_start + self.T
+            is_leaving = False
         
         # calculate minimum distance to all secondaries during transit time
         closest_secondary = None
+        is_entering = False
         t_soi_change = t_end
         for secondary in self.primary.secondaries:
             t_min,d_min = self.calc_min_distance(secondary, t_start, t_end)
             if d_min < secondary.soi:
+                is_entering = True
                 t_soi, d_soi = self.calc_soi_enter(secondary, t_start, t_min)
+                # this check is for possible multiple SOI changes, to find the earliest one
                 if t_soi < t_soi_change:
                     t_soi_change = t_soi
                     closest_secondary = secondary
-        return t_soi_change, closest_secondary
+
+
+        if is_entering:
+            return t_soi_change, closest_secondary
+        elif is_leaving:
+            # if leaving, return time of leaving SOI and the primary of current primary
+            return t_end, self.primary.orbit.primary
+        else:
+            # if not leaving or entering, return None
+            return t_end, None
 
     def calc_soi_enter(self, secondary, t_start, t_min):
         """Calculate the time of entering a secondary's SOI
