@@ -60,7 +60,31 @@ class orbit:
     omega: argument of periapsis in degrees
     OMEGA: RAAN in degrees
     t0: time of orbit initialization
-    nu0: true anomaly at initialization in radians"""
+    nu0: true anomaly at initialization in radians
+    
+    List of functions:
+    1. calc_missing_parameters: Calculates missing parameters from given data.
+    2. check_elliptic: Checks if the orbit is elliptic.
+    3. check_hyperbolic: Checks if the orbit is hyperbolic.
+    4. calc_mean_anomaly: Calculates the mean anomaly.
+    5. calc_eccentric_anomaly: Calculates the eccentric anomaly.
+    6. calc_true_anomaly: Calculates the true anomaly.
+    7. calc_polar: Calculates the polar coordinates.
+    8. calc_xyz: Calculates the Cartesian coordinates.
+    9. calc_epoch_time: Calculates the epoch time from true anomaly.
+    10. recalc_orbit_visu: Recalculates the orbit for visualization.
+    11. calc_speed: Calculates the speed at a given time.
+    12. calc_zenith_angle: Calculates the zenith angle.
+    13. calc_circularization_ap: Calculates the delta-v needed for circularization burn at apoapsis.
+    14. calc_circularization_pe: Calculates the delta-v needed for circularization burn at periapsis.
+    15. calc_distance_to: Calculates the distance to another object at a given time.
+    16. calc_min_distance_to: Calculates the minimum distance to another object during a given time interval.
+    17. calc_soi_leave_time: Calculates the time when the spacecraft leaves the SOI of the primary body.
+    18. calc_soi_change: Calculates the time of SOI change and the new primary.
+    19. calc_soi_enter: Calculates the time of entering a secondary's SOI.
+    20. do_maneuver: Performs a maneuver and returns the new orbital parameters.
+    21. calc_soi_change: Calculates the time of SOI change.
+    """
     def __init__(self, primary, **kwargs):
         self.primary = primary
         orbit_kwargs = self.calc_missing_parameters(**kwargs)

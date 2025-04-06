@@ -1,3 +1,32 @@
+# List of functions in this file with short descriptions:
+# - plot_hohmann_orbit: Plot a Hohmann transfer orbit, including source, destination, and transfer orbit.
+# - time: Convert a date to seconds for KSP.
+# - date: Convert seconds to a date for KSP.
+# - pretty_date: Format a time in seconds into a readable KSP date string.
+# - initialize_plot: Initialize a polar plot for orbital visualization.
+# - add_planetary_orbit_to_plot: Add a planetary body's orbit to the plot.
+# - add_orbit_to_plot: Add a generic orbit to the plot with an optional label.
+# - add_orbit_point_to_plot: Add a specific point on an orbit to the plot.
+# - calc_circle_for_polar: Calculate a circle's coordinates for a polar plot.
+# - add_soi_to_plot: Add the sphere of influence (SOI) of a planetary body to the plot.
+# - add_planetary_body_to_plot: Add a planetary body to the plot, including its radius.
+# - add_point_to_plot: Add a point to the plot with optional label and marker.
+
+__all__ = [
+    "plot_hohmann_orbit",
+    "time",
+    "date",
+    "pretty_date",
+    "initialize_plot",
+    "add_planetary_orbit_to_plot",
+    "add_orbit_to_plot",
+    "add_orbit_point_to_plot",
+    "calc_circle_for_polar",
+    "add_soi_to_plot",
+    "add_planetary_body_to_plot",
+    "add_point_to_plot",
+]
+
 import numpy as np
 import matplotlib.pyplot as plt
 plt.rc("figure", figsize=[12,8])
