@@ -64,30 +64,37 @@ class orbit:
     
     List of functions:
     1. calc_missing_parameters: Calculates missing parameters from given data.
-    2. check_elliptic: Checks if the orbit is elliptic.
-    3. check_hyperbolic: Checks if the orbit is hyperbolic.
-    4. calc_mean_anomaly: Calculates the mean anomaly.
-    5. calc_eccentric_anomaly: Calculates the eccentric anomaly.
-    6. calc_true_anomaly: Calculates the true anomaly.
-    7. calc_polar: Calculates the polar coordinates.
-    8. calc_xyz: Calculates the Cartesian coordinates.
-    9. calc_epoch_time: Calculates the epoch time from true anomaly.
-    10. recalc_orbit_visu: Recalculates the orbit for visualization.
-    11. calc_speed: Calculates the speed at a given time.
-    12. calc_zenith_angle: Calculates the zenith angle.
-    13. calc_circularization_ap: Calculates the delta-v needed for circularization burn at apoapsis.
-    14. calc_circularization_pe: Calculates the delta-v needed for circularization burn at periapsis.
-    15. calc_distance_to: Calculates the distance to another object at a given time.
-    16. calc_min_distance_to: Calculates the minimum distance to another object during a given time interval.
-    17. calc_soi_leave_time: Calculates the time when the spacecraft leaves the SOI of the primary body.
-    18. calc_soi_change: Calculates the time of SOI change and the new primary.
-    19. calc_soi_enter: Calculates the time of entering a secondary's SOI.
-    20. do_maneuver: Performs a maneuver and returns the new orbital parameters.
-    21. calc_soi_change: Calculates the time of SOI change.
+    2. calc_orbit_from_state_vector: Calculates orbital parameters from state vector.
+    3. check_elliptic: Checks if the orbit is elliptic.
+    4. check_hyperbolic: Checks if the orbit is hyperbolic.
+    5. calc_mean_anomaly: Calculates the mean anomaly.
+    6. calc_eccentric_anomaly: Calculates the eccentric anomaly.
+    7. calc_true_anomaly: Calculates the true anomaly.
+    8. calc_polar: Calculates the polar coordinates.
+    9. calc_xyz: Calculates the Cartesian coordinates.
+    10. calc_epoch_time: Calculates the epoch time from true anomaly.
+    11. recalc_orbit_visu: Recalculates the orbit for visualization.
+    12. calc_speed: Calculates the speed at a given time.
+    13. calc_zenith_angle: Calculates the zenith angle.
+    14. calc_circularization_ap: Calculates the delta-v needed for circularization burn at apoapsis.
+    15. calc_circularization_pe: Calculates the delta-v needed for circularization burn at periapsis.
+    16. calc_distance_to: Calculates the distance to another object at a given time.
+    17. calc_min_distance_to: Calculates the minimum distance to another object during a given time interval.
+    18. calc_soi_leave_time: Calculates the time when the spacecraft leaves the SOI of the primary body.
+    19. calc_soi_change: Calculates the time of SOI change and the new primary.
+    20. calc_soi_enter: Calculates the time of entering a secondary's SOI.
+    21. do_maneuver: Performs a maneuver and returns the new orbital parameters.
+    22. calc_soi_change: Calculates the time of SOI change.
     """
     def __init__(self, primary, **kwargs):
         self.primary = primary
-        orbit_kwargs = self.calc_missing_parameters(**kwargs)
+        # either initialize orbit from state vector...
+        if 'r' in kwargs and 'v' in kwargs:
+            orbit_kwargs_state_vector = self.calc_orbit_from_state_vector(**kwargs)
+            orbit_kwargs = self.calc_missing_parameters(**orbit_kwargs_state_vector)
+        # or initialize from orbital parameters
+        else:
+            orbit_kwargs = self.calc_missing_parameters(**kwargs)
 
         self.a = orbit_kwargs['a'] # semi-major axis
         self.e = orbit_kwargs['e'] # eccentricity
@@ -119,6 +126,37 @@ class orbit:
         self.is_hohmann = False # default setting
 
         self.recalc_orbit_visu(self.t0, self.t0+self.T)
+
+    def calc_orbit_from_state_vector(self, **kwargs):
+        """Calculate orbital parameters from state vector"""
+        assert('r' in kwargs and 'v' in kwargs), "State vector initialization needs radius and speed"
+        GM = self.primary.GM
+        r = kwargs['r']
+        v = kwargs['v']
+        
+        if 't0' in kwargs:
+            t0 = kwargs['t0']
+        else:
+            t0 = 0
+
+        # if zenith angle is not given, use 90 degrees
+        if 'gamma' in kwargs:
+            gamma = kwargs['gamma']
+        else:
+            gamma = pi/2
+        #flight path angle
+        phi = pi/2 - gamma
+
+        a = 1/(2/r - v**2/GM)
+        e = sqrt((r*v**2/GM - 1)**2 * cos(phi)**2 + sin(phi)**2)
+        mu0 = atan( r*v**2/GM*cos(phi)*sin(phi) /
+                  (r*v**2/GM*cos(phi)**2 - 1) )
+        return {
+            'a': a,
+            'e': e,
+            't0': t0,
+            'nu0': mu0
+        }
 
     def calc_missing_parameters(self, **kwargs):
         """Calculate parameters needed for orbit definition from given data.
