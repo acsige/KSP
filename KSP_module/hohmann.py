@@ -122,47 +122,47 @@ def calc_window(src_orbit, dst_orbit, t0):
     Hohmann.enter_dv = abs(Hohmann.calc_speed(t_arrival) - dst_orbit.calc_speed(t_arrival))  # delta-v needed to match target orbit
     return Hohmann
 
-    def calc_hohmann_dv(src_orbit, dst_orbit):
-        """Calculate delta-v for Hohmann escape or capture, eg. from/to LKO"""
-        
-        # either source or destination must be a Hohmann orbit (exactly one)
-        assert(src_orbit.is_hohmann ^ dst_orbit.is_hohmann), 'Exactly one orbit must be a Hohmann orbit'
-        # chack which one is which
-        if src_orbit.is_hohmann:
-            hohmann_orbit = src_orbit
-            parking_orbit = dst_orbit
-            is_capture = True
-            # this is to check that the destination and the Hohmann orbit are at the same position
-            # at the time of arrival, and calculate the dv
-            t_calc = hohmann_orbit.t_arrival
-        else:
-            hohmann_orbit = dst_orbit
-            parking_orbit = src_orbit
-            is_capture = False
-            # this is to check that the source and the Hohmann orbit are at the same position
-            # at the time of launch, and calculate the dv
-            t_calc = hohmann_orbit.t_launch
+def calc_hohmann_dv(src_orbit, dst_orbit):
+    """Calculate delta-v for Hohmann escape or capture, eg. from/to LKO"""
+    
+    # either source or destination must be a Hohmann orbit (exactly one)
+    assert(src_orbit.is_hohmann ^ dst_orbit.is_hohmann), 'Exactly one orbit must be a Hohmann orbit'
+    # chack which one is which
+    if src_orbit.is_hohmann:
+        hohmann_orbit = src_orbit
+        parking_orbit = dst_orbit
+        is_capture = True
+        # this is to check that the destination and the Hohmann orbit are at the same position
+        # at the time of arrival, and calculate the dv
+        t_calc = hohmann_orbit.t_arrival
+    else:
+        hohmann_orbit = dst_orbit
+        parking_orbit = src_orbit
+        is_capture = False
+        # this is to check that the source and the Hohmann orbit are at the same position
+        # at the time of launch, and calculate the dv
+        t_calc = hohmann_orbit.t_launch
 
-        # parking is around a body orbiting the same primary as the Hohmann orbit
-        parking_body = parking_orbit.primary
-        assert(parking_body.orbit.primary == hohmann_orbit.primary),\
-            'Parking orbit must be around a body orbiting the same primary as the Hohmann orbit'
-        
-        # check that the two orbits are plausible
-        parking_p0 = parking_body.orbit.calc_xyz(t_calc)
-        hohmann_p0 = hohmann_orbit.calc_xyz(t_calc)
-        # np.testing.assert_almost_equal(parking_p0[:2], hohmann_p0[:2], decimal=10, err_msg='', verbose=True),\
-        #     'Parking orbit and Hohmann orbit must be at similar x,y position either at launch or arrival'
-        
-        # calculate dv to/from Hohmann orbit, relative to the primary body of the parking orbit
-        # this is the speed when leaving/entering the SOI
-        v_soi = abs(hohmann_orbit.calc_speed(t_calc) - parking_body.orbit.calc_speed(t_calc))
-        r_soi = parking_body.soi
+    # parking is around a body orbiting the same primary as the Hohmann orbit
+    parking_body = parking_orbit.primary
+    assert(parking_body.orbit.primary == hohmann_orbit.primary),\
+        'Parking orbit must be around a body orbiting the same primary as the Hohmann orbit'
+    
+    # check that the two orbits are plausible
+    parking_p0 = parking_body.orbit.calc_xyz(t_calc)
+    hohmann_p0 = hohmann_orbit.calc_xyz(t_calc)
+    # np.testing.assert_almost_equal(parking_p0[:2], hohmann_p0[:2], decimal=10, err_msg='', verbose=True),\
+    #     'Parking orbit and Hohmann orbit must be at similar x,y position either at launch or arrival'
+    
+    # calculate dv to/from Hohmann orbit, relative to the primary body of the parking orbit
+    # this is the speed when leaving/entering the SOI
+    v_soi = abs(hohmann_orbit.calc_speed(t_calc) - parking_body.orbit.calc_speed(t_calc))
+    r_soi = parking_body.soi
 
-        v_parking = parking_orbit.calc_speed(t_calc)
-        r_parking = parking_orbit.a
-        
-        # calculate speed at parking orbit height using vis-viva equation
-        GM = parking_body.GM
-        v_hohmann_at_parking = sqrt(v_soi**2 + 2*GM/r_parking - 2*GM/r_soi)
-        return v_hohmann_at_parking - v_parking
+    v_parking = parking_orbit.calc_speed(t_calc)
+    r_parking = parking_orbit.a
+    
+    # calculate speed at parking orbit height using vis-viva equation
+    GM = parking_body.GM
+    v_hohmann_at_parking = sqrt(v_soi**2 + 2*GM/r_parking - 2*GM/r_soi)
+    return v_hohmann_at_parking - v_parking
