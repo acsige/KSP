@@ -86,10 +86,6 @@ def calc_window(src_orbit, dst_orbit, t0):
     t_launch = t0 + t_miss
     # Real iteration
     while abs(t_miss) > MISS_TOL:
-
-        # possible solution: wrap around by adding the window period
-        #if t_launch < t0:
-        #    t_launch = t_launch + t_window_period
         
         # recalculate Hohmann orbit
         Hohmann = calc_hohmann(src_orbit, dst_orbit, t_launch)
@@ -112,18 +108,18 @@ def calc_window(src_orbit, dst_orbit, t0):
         t_launch = t_launch + t_miss
         # if the launch time is before t0, wrap around
         t_launch = t_launch + t_window_period if t_launch < t0 else t_launch
-        #  stop the iteration
-        assert (t_launch >= t0), "Iterated launch time is before start time"
     
     # Prepare output
     t_arrival = Hohmann.t_arrival
     Hohmann.recalc_orbit_visu(Hohmann.t_launch,Hohmann.t_arrival)
-    Hohmann.leave_dv = abs(Hohmann.calc_speed(t_launch) - src_orbit.calc_speed(t_launch))  # delta-v needed for leaving
-    Hohmann.enter_dv = abs(Hohmann.calc_speed(t_arrival) - dst_orbit.calc_speed(t_arrival))  # delta-v needed to match target orbit
+    # delta-v needed for leaving source body orbit
+    Hohmann.leave_dv = abs(Hohmann.calc_speed(t_launch) - src_orbit.calc_speed(t_launch))
+    # delta-v needed to match target body orbit
+    Hohmann.enter_dv = abs(Hohmann.calc_speed(t_arrival) - dst_orbit.calc_speed(t_arrival))
     return Hohmann
 
 def calc_hohmann_dv(src_orbit, dst_orbit):
-    """Calculate delta-v for Hohmann escape or capture, eg. from/to LKO"""
+    """Calculate delta-v for Hohmann escape or capture, from/to an orbit around the source or destination body"""
     
     # either source or destination must be a Hohmann orbit (exactly one)
     assert(src_orbit.is_hohmann ^ dst_orbit.is_hohmann), 'Exactly one orbit must be a Hohmann orbit'
@@ -131,16 +127,12 @@ def calc_hohmann_dv(src_orbit, dst_orbit):
     if src_orbit.is_hohmann:
         hohmann_orbit = src_orbit
         parking_orbit = dst_orbit
-        is_capture = True
-        # this is to check that the destination and the Hohmann orbit are at the same position
+        # t_calc is to check that the destination and the Hohmann orbit are at the same position
         # at the time of arrival, and calculate the dv
         t_calc = hohmann_orbit.t_arrival
     else:
         hohmann_orbit = dst_orbit
         parking_orbit = src_orbit
-        is_capture = False
-        # this is to check that the source and the Hohmann orbit are at the same position
-        # at the time of launch, and calculate the dv
         t_calc = hohmann_orbit.t_launch
 
     # parking is around a body orbiting the same primary as the Hohmann orbit
@@ -148,11 +140,10 @@ def calc_hohmann_dv(src_orbit, dst_orbit):
     assert(parking_body.orbit.primary == hohmann_orbit.primary),\
         'Parking orbit must be around a body orbiting the same primary as the Hohmann orbit'
     
-    # check that the two orbits are plausible
+    #TODO check that the two orbits are plausible
+    # Problem: inclination is not yet handled
     parking_p0 = parking_body.orbit.calc_xyz(t_calc)
     hohmann_p0 = hohmann_orbit.calc_xyz(t_calc)
-    # np.testing.assert_almost_equal(parking_p0[:2], hohmann_p0[:2], decimal=10, err_msg='', verbose=True),\
-    #     'Parking orbit and Hohmann orbit must be at similar x,y position either at launch or arrival'
     
     # calculate dv to/from Hohmann orbit, relative to the primary body of the parking orbit
     # this is the speed when leaving/entering the SOI

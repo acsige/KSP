@@ -24,7 +24,6 @@ class body:
     def __init__(self, orbit):
         self.primary = orbit.primary
         self.orbit = orbit
-        # self.name = 
 
 class planetary_body(body):
     def __init__(self, name, orbit, GM, radius=0, atmo_height=0):
@@ -51,7 +50,7 @@ class planetary_body(body):
             raise ValueError("Altitude is inside atmosphere")
 
 class orbit:
-    """Default orbit is the circular orbit of Kerbin around Kerbol
+    """Class to hold orbital parameters and calculate orbital positions.
     Inputs are a bit chaotic but conform to KSP's way of defining orbits:
     primary: body around which the orbit is
     a: semi-major axis in meters
@@ -127,6 +126,7 @@ class orbit:
 
         self.recalc_orbit_visu(self.t0, self.t0+self.T)
 
+    #TODO: this is just a stub for now, needs to be implemented
     def calc_orbit_from_state_vector(self, **kwargs):
         """Calculate orbital parameters from state vector"""
         assert('r' in kwargs and 'v' in kwargs), "State vector initialization needs radius and speed"
@@ -233,7 +233,6 @@ class orbit:
         return not(self.check_elliptic())
 
     def calc_mean_anomaly(self, time):
-        # return (time-self.t0)*self.n + self.nu0
         return (time-self.t_epoch)*self.n
 
     def calc_eccentric_anomaly(self, time):
@@ -271,7 +270,6 @@ class orbit:
 
     def calc_epoch_time(self, nu0):
         """Calculate epoch time from true anomaly"""
-        # E0 = np.arccos((self.e+np.cos(nu0)) / (1+self.e*np.cos(nu0)))
         E0 = 2*np.arctan(np.tan(nu0/2)/np.sqrt((1+self.e)/(1-self.e)))
         M0 = E0 - self.e*np.sin(E0)
         return self.t0-M0/self.n
@@ -290,8 +288,6 @@ class orbit:
         r1 = self.calc_polar(time)[0]
         v1 = self.calc_speed(time)
         return np.arcsin((self.vp*self.rp) / (v1*r1))
-        # nu = self.calc_true_anomaly(time)
-        # return np.arccos(self.e + np.cos(nu))/(1 + self.e*np.cos(nu))
     
     def calc_circularization_ap(self):
         """Calculate the delta-v needed for circularization burn at apoapsis""" 
@@ -410,7 +406,6 @@ class orbit:
                     t_soi_change = t_soi
                     closest_secondary = secondary
 
-
         if is_entering:
             return t_soi_change, closest_secondary
         elif is_leaving:
@@ -457,25 +452,3 @@ class orbit:
                   (r*v**2/self.primary.GM*cos(fphi)**2 - 1) )
         return a,e,mu
     
-    #TODO: implement function to calculate time of SOI change
-    def calc_soi_change(self, t0):
-        """Calculate the time of SOI change and the new primary
-        Args:
-            t0: start time of calculation
-        Returns:
-            t_change: time of SOI change
-            new_primary: new primary body"""
-        
-        # check if current orbit is elliptic or hyperbolic
-
-        # if hyperbolic, calculate time when leaving primary SOI and use it for iteration
-        # if elliptic, end time is t0 + T
-        
-        # calculate minimum distance to all secondaries during transit time
-
-            # check if minimum distances are smaller than SOI radii
-            # if yes, calculate time of SOI change for first one
-        pass
-
-
-    """function to initialize orbit from a state vector"""
