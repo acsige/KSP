@@ -1,74 +1,28 @@
 #%%
 import matplotlib.pyplot as plt
-plt.rc("figure", figsize=[12,8])
+plt.rc("figure", figsize=[6,4])
 plt.rc("font", size=8)
 from math import pi, sqrt
 import KSP_module as ksp
 from KSP_module import Kerbol, Kerbin, Duna, Eve, Mun, Minmus, Moho
 #%%
+class orbit_devel(ksp.orbit):
+    def __init__(self, primary, **kwargs):
+        super().__init__(primary, **kwargs)
+        print("orbit_devel init")
+#%%
 # Testing during development
 if __name__ == "__main__":
-    # Plotting Hohmann transfer orbits
-    transfer1 = ksp.calc_window(Kerbin.orbit, Duna.orbit, 0)
-    fig,ax = ksp.plot_hohmann_orbit(Kerbin, Duna, transfer1)
-    plt.show()
-    print([ksp.pretty_date(transfer1.t_launch), transfer1.t_launch])
-    
-    transfer2 = ksp.calc_window(Kerbin.orbit, Eve.orbit, 0)
-    fig,ax = ksp.plot_hohmann_orbit(Kerbin, Eve, transfer2)
-    plt.show()
-    print([ksp.pretty_date(transfer2.t_launch), transfer2.t_launch])
-
-    LKO = ksp.orbit(Kerbin, min_alt = 70000.1, e=0)
+    LKO = orbit_devel(Kerbin, min_alt = 70000.1, e=0)
     transfer3 = ksp.calc_window(LKO, Mun.orbit, 0)
+    transfer3_devel = orbit_devel(Kerbin, **transfer3.orbit_kwargs)
+    t_soi = transfer3.calc_soi_change(0)[0]
+
     fig,ax = ksp.plot_hohmann_orbit(LKO, Mun, transfer3)
-    ax = ksp.add_soi_to_plot(ax, Mun, transfer3.t_launch)
+    ax = ksp.add_soi_to_plot(ax, Mun, t_soi)
+    ax = ksp.add_planetary_body_to_plot(ax, Mun, t_soi, label=None)
+    ax = ksp.add_orbit_point_to_plot(ax, transfer3, t_soi, label="SOI enter")
     plt.show()
     print([ksp.pretty_date(transfer3.t_launch), transfer3.t_launch])
-# %%
-LKOe = ksp.orbit(Kerbin, min_alt = 70000.1, e=0.2, nu0=2)
-t1,d1 = LKOe.calc_min_distance_to(Kerbin, LKOe.T/2, LKOe.T)
-print(t1,d1)
-fig,ax = ksp.initialize_plot()
-ax = ksp.add_orbit_to_plot(ax, LKOe)
-ax = ksp.add_orbit_point_to_plot(ax, LKOe, LKOe.t0, label='t0', marker='X')
-ax = ksp.add_orbit_point_to_plot(ax, LKOe, t1, label='t1', marker='X')
-# ax = ksp.add_orbit_point_to_plot(ax, LKOe, LKOe.T/2, label='T/2', marker='X')
-# ax = ksp.add_orbit_point_to_plot(ax, LKOe, LKOe.T, label='T', marker='X')
-# ax = ksp.add_orbit_point_to_plot(ax, LKOe, t1, label='t1', marker='o')
 
-# %%
-LKO = ksp.orbit(Kerbin, min_alt = 70000.1, e=0)
-transfer = ksp.calc_window(Kerbin.orbit, Moho.orbit, 0)
-fig,ax = ksp.plot_hohmann_orbit(Kerbin, Moho, transfer)
-ax = ksp.add_soi_to_plot(ax, Moho, transfer.t_launch)
-plt.show()
-
-min_dist = transfer.calc_distance_to(Moho, transfer.t_arrival)
-# velocity relative to Kerbin when coming out of Kerbin SOI
-v_soi = abs(transfer.calc_speed(transfer.t_launch) - Kerbin.orbit.calc_speed(transfer.t_launch))
-# velocity needed at Kerbin periapsis to reach SOI with the speed necessary
-v_lko_launch = sqrt(v_soi**2 + 2*Kerbin.GM*(1/LKO.ra - 1/Kerbin.soi))
-dv = v_lko_launch - LKO.va
-print(v_soi, v_lko_launch, dv)
-
-#%%
-# Example usage
-LKO = ksp.orbit(Kerbin, min_alt = 70000.1, e=0)
-
-t0 = 0
-for i in range(3):
-    transfer = ksp.calc_window(Kerbin.orbit, Moho.orbit, t0)
-    dv = ksp.calc_hohmann_dv(transfer, LKO)
-    min_dist = transfer.calc_distance_to(Moho, transfer.t_arrival)
-    print(f'Time of launch: {ksp.pretty_date(transfer.t_launch)}')
-    print(f'Time of arrival: {ksp.pretty_date(transfer.t_arrival)}')
-    print(f"Minimum distance to Moho at arrival: {min_dist/1e6:.2f} M km")
-    print(f"Delta-v needed for transfer from LKO to Moho: {dv:.2f} m/s")
-    print('-------------------')
-    t0 = transfer.t_launch + 1000
-    print(t0)
-
-# %%
-transfer = ksp.calc_window(Kerbin.orbit, Moho.orbit, 6717200)
 # %%
