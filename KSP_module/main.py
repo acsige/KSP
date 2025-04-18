@@ -90,26 +90,26 @@ class orbit:
         # either initialize orbit from state vector...
         if 'r' in kwargs and 'v' in kwargs:
             orbit_kwargs_state_vector = self.calc_orbit_from_state_vector(**kwargs)
-            orbit_kwargs = self.calc_missing_parameters(**orbit_kwargs_state_vector)
+            self.orbit_kwargs = self.calc_missing_parameters(**orbit_kwargs_state_vector)
         # or initialize from orbital parameters
         else:
-            orbit_kwargs = self.calc_missing_parameters(**kwargs)
+            self.orbit_kwargs = self.calc_missing_parameters(**kwargs)
 
-        self.a = orbit_kwargs['a'] # semi-major axis
-        self.e = orbit_kwargs['e'] # eccentricity
-        self.i = orbit_kwargs['i']*pi/180 # inclination in radians
-        self.omega = orbit_kwargs['omega']*pi/180 # argument of periapsis in radians
-        self.OMEGA = orbit_kwargs['OMEGA']*pi/180 # RAAN in radians
+        self.a = self.orbit_kwargs['a'] # semi-major axis
+        self.e = self.orbit_kwargs['e'] # eccentricity
+        self.i = self.orbit_kwargs['i']*pi/180 # inclination in radians
+        self.omega = self.orbit_kwargs['omega']*pi/180 # argument of periapsis in radians
+        self.OMEGA = self.orbit_kwargs['OMEGA']*pi/180 # RAAN in radians
         self.OMEGA_projected = atan2(sin(self.OMEGA)*cos(self.i), cos(self.OMEGA))
-        self.t0 = orbit_kwargs['t0'] # time of orbit initialization
+        self.t0 = self.orbit_kwargs['t0'] # time of orbit initialization
         
         self.T = np.sqrt(4*np.pi**2*self.a**3/self.primary.GM) # orbital period, seconds
         self.n = 2*np.pi/self.T # angular velocity, rad/s
-        if orbit_kwargs['nu0'] == 0:
+        if self.orbit_kwargs['nu0'] == 0:
             self.t_epoch = self.t0  # time of periapsis passage
         else:
-            self.t_epoch = self.calc_epoch_time(orbit_kwargs['nu0'])
-        self.nu0 = orbit_kwargs['nu0'] # true anomaly at epoch
+            self.t_epoch = self.calc_epoch_time(self.orbit_kwargs['nu0'])
+        self.nu0 = self.orbit_kwargs['nu0'] # true anomaly at epoch
 
         self.rp = self.a*(1-self.e) # periapsis
         self.ra = self.a*(1+self.e) # apoapsis
@@ -397,10 +397,10 @@ class orbit:
         is_entering = False
         t_soi_change = t_end
         for secondary in self.primary.secondaries:
-            t_min,d_min = self.calc_min_distance(secondary, t_start, t_end)
+            t_min,d_min = self.calc_min_distance_to(secondary, t_start, t_end)
             if d_min < secondary.soi:
                 is_entering = True
-                t_soi, d_soi = self.calc_soi_enter(secondary, t_start, t_min)
+                t_soi = self.calc_soi_enter(secondary, t_start, t_min)
                 # this check is for possible multiple SOI changes, to find the earliest one
                 if t_soi < t_soi_change:
                     t_soi_change = t_soi
