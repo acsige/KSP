@@ -6,7 +6,6 @@
 import numpy as np 
 from math import sqrt, pi
 from KSP_module.main import orbit, planetary_body
-from KSP_module.system import Kerbin
 
 # tolerance for Hohmann transfer calculation
 MISS_TOL = 5  # seconds
@@ -48,7 +47,7 @@ def calc_hohmann(src_orbit, dst_orbit, t0):
         ang_offset = 0
     
     ang_launch = src_orbit.calc_polar(t0)[1]
-    kwargs['omega'] = (ang_launch+ang_offset)*180/pi
+    kwargs['omega'] = np.mod((ang_launch+ang_offset)*180/pi, 360)
     kwargs['t0'] = t0
     kwargs['nu0'] = ang_offset
     result_orbit = orbit(primary, **kwargs)
@@ -84,6 +83,7 @@ def calc_window(src_orbit, dst_orbit, t0):
 
     # first launch time
     t_launch = t0 + t_miss
+
     # Real iteration
     while abs(t_miss) > MISS_TOL:
         
@@ -99,11 +99,21 @@ def calc_window(src_orbit, dst_orbit, t0):
         elif ang_miss < -pi:
             ang_miss = ang_miss + 2*pi
             
-        # modify start time using calculated error
-        # use the angular velocity of the faster orbit
+        # store previous miss time
+        t_miss_prev = t_miss
+        # calculate new miss time 
+        # using the angular velocity of the faster orbit
         t_miss = ang_miss/max(src_orbit.n, dst_orbit.n)
+        # sign depends on which is the faster: source or destination orbit
         if src_orbit.n > dst_orbit.n:
             t_miss = -t_miss
+
+        # if the sign of the previous and current miss time is different,
+        # then the launch time is between the two
+        # under relaxation is used in this case to avoid unstable oscillations
+        if t_miss_prev * t_miss < 0:
+            t_miss = 0.8*t_miss
+
         # use miss time to recalculate launch time
         t_launch = t_launch + t_miss
         # if the launch time is before t0, wrap around
