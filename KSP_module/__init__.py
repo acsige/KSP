@@ -14,8 +14,8 @@ transfer2 = calc_window(Kerbin.orbit, Eve.orbit, 0)
 transfer3 = calc_window(LKO, Mun.orbit, 0)
 
 transfer_dict = {
-    # reference values calculated on 2025.03.30.
-    'Duna': (transfer1, 5087190.73, 11464782.67),
+    # reference values calculated on 2025.04.20.
+    'Duna': (transfer1, 5087177, 11464768),
     # reference values calculated on 2025.03.23.
     'Eve': (transfer2, 11824011.22, 15502404.90),
     # reference values calculated on 2025.03.23.

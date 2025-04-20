@@ -63,62 +63,72 @@ def calc_window(src_orbit, dst_orbit, t0):
     assert(src_orbit.primary == dst_orbit.primary)
 
     # calculate period of search: time to get to the same angle difference as at zero time
-    t_window_period = 2*pi / abs(dst_orbit.n - src_orbit.n)    
+    t_window_period = 2*pi / abs(dst_orbit.n - src_orbit.n)
+
+    # inner functions
+    def calc_t_miss(trs_orbit, src_orbit, dst_orbit):
+        """Inner function to calculate time error for the Hohmann transfer orbit
+        Returns the time by which the transfer orbit apoapsis or periapsis missed
+        the target body"""
+        # calculate angular position of the Hohmann orbit at arrival
+        t_arrival = trs_orbit.t_arrival
+        ang_h = np.mod(trs_orbit.calc_polar(t_arrival)[1], 2*np.pi)
+        # calculate angular position of the target orbit at arrival
+        ang_dst = np.mod(dst_orbit.calc_polar(t_arrival)[1], 2*np.pi)
+        # calculate angular difference
+        ang_miss = ang_h - ang_dst
+        # convert miss angle to between -pi and pi
+        if ang_miss > pi:
+            ang_miss = ang_miss - 2*pi
+        elif ang_miss < -pi:
+            ang_miss = ang_miss + 2*pi
+        # calculate miss time using the angular 
+        # velocity difference of the two orbits
+        t_miss = ang_miss/abs(src_orbit.n - dst_orbit.n)
+        # sign depends on which is the faster: source or destination orbit
+        if src_orbit.n > dst_orbit.n:
+            t_miss = -t_miss
+
+        return t_miss
+    
+    def calc_t_launch(t_launch, t_miss, t0, t_window_period):
+        """Inner function to calculate launch time"""
+        # recalculate launch time
+        t_launch = t_launch + t_miss
+        # if the launch time is before t0, wrap around
+        t_launch = t_launch + t_window_period if t_launch < t0 else t_launch
+        return t_launch
+
     # First calculation - transfer orbit at start of search window
     Hohmann = calc_hohmann(src_orbit, dst_orbit, t0)
-    # calculate time error - by how much time we've missed the target when arriving its orbit
-    ang_h = np.mod(Hohmann.calc_polar(Hohmann.t_arrival)[1], 2*np.pi)
-    ang_dst = np.mod(dst_orbit.calc_polar(Hohmann.t_arrival)[1], 2*np.pi)
-    ang_miss = ang_h - ang_dst
     
-    # modify start time using calculated error
-    # use the angular velocity of the faster orbit
-    t_miss = ang_miss/max(src_orbit.n, dst_orbit.n)
-    if src_orbit.n > dst_orbit.n:
-        t_miss = -t_miss
-
-    # if the new launch time is before t0, wrap around by adding the window period
-    if t_miss < 0:
-        t_miss = t_miss + t_window_period
-
-    # first launch time
-    t_launch = t0 + t_miss
+    # calculate time error and launch time
+    t_miss = calc_t_miss(Hohmann, src_orbit, dst_orbit)
+    t_launch = calc_t_launch(t0, t_miss, t0, t_window_period)
 
     # Real iteration
     while abs(t_miss) > MISS_TOL:
         
         # recalculate Hohmann orbit
         Hohmann = calc_hohmann(src_orbit, dst_orbit, t_launch)
-        # calculate timing error
-        ang_h = np.mod(Hohmann.calc_polar(Hohmann.t_arrival)[1], 2*np.pi)
-        ang_dst = np.mod(dst_orbit.calc_polar(Hohmann.t_arrival)[1], 2*np.pi)
-        ang_miss = ang_h - ang_dst
-        # convert miss angle between -pi and pi
-        if ang_miss > pi:
-            ang_miss = ang_miss - 2*pi
-        elif ang_miss < -pi:
-            ang_miss = ang_miss + 2*pi
             
-        # store previous miss time
+        # store previous miss time and calculate new one
         t_miss_prev = t_miss
-        # calculate new miss time 
-        # using the angular velocity of the faster orbit
-        t_miss = ang_miss/max(src_orbit.n, dst_orbit.n)
-        # sign depends on which is the faster: source or destination orbit
-        if src_orbit.n > dst_orbit.n:
-            t_miss = -t_miss
+        t_miss = calc_t_miss(Hohmann, src_orbit, dst_orbit)
 
         # if the sign of the previous and current miss time is different,
-        # then the launch time is between the two
-        # under relaxation is used in this case to avoid unstable oscillations
+        # under relaxation is used to suppress oscillations
+        # if the sign is the same, overrelaxation is used
+        # to speed up the convergence
+        # relaxation parameters were found by trial and error
         if t_miss_prev * t_miss < 0:
-            t_miss = 0.8*t_miss
+            t_miss = 0.7*t_miss
+        elif t_miss_prev * t_miss > 0:
+            t_miss = 1.2*t_miss
 
         # use miss time to recalculate launch time
-        t_launch = t_launch + t_miss
-        # if the launch time is before t0, wrap around
-        t_launch = t_launch + t_window_period if t_launch < t0 else t_launch
-    
+        t_launch = calc_t_launch(t_launch, t_miss, t0, t_window_period)
+
     # Prepare output
     t_arrival = Hohmann.t_arrival
     Hohmann.recalc_orbit_visu(Hohmann.t_launch,Hohmann.t_arrival)
