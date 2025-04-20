@@ -16,10 +16,10 @@ transfer3 = calc_window(LKO, Mun.orbit, 0)
 transfer_dict = {
     # reference values calculated on 2025.04.20.
     'Duna': (transfer1, 5087177, 11464768),
+    # reference values calculated on 2025.04.20.
+    'Eve': (transfer2, 11824001, 15502390),
     # reference values calculated on 2025.03.23.
-    'Eve': (transfer2, 11824011.22, 15502404.90),
-    # reference values calculated on 2025.03.23.
-    'Mun': (transfer3, 1788.19, 28445.34)
+    'Mun': (transfer3, 1788, 28445)
 }
 
 for key, value in transfer_dict.items():

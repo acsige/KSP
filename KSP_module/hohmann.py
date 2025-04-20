@@ -122,7 +122,7 @@ def calc_window(src_orbit, dst_orbit, t0):
         # to speed up the convergence
         # relaxation parameters were found by trial and error
         if t_miss_prev * t_miss < 0:
-            t_miss = 0.7*t_miss
+            t_miss = 0.5*t_miss
         elif t_miss_prev * t_miss > 0:
             t_miss = 1.2*t_miss
 
