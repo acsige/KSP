@@ -6,7 +6,9 @@ from KSP_module.hohmann import *
 from KSP_module.plot import *
 
 print("KSP module loaded")
-# Testing many things w/ Hohmann transfer orbits
+
+# Testing is done each time the module is loaded!
+# Hohmann transfer orbits
 max_error = 2*MISS_TOL
 LKO = orbit(Kerbin, min_alt = 70000.1, e=0)
 transfer1 = calc_window(Kerbin.orbit, Duna.orbit, 0)
