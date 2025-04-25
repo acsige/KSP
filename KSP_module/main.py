@@ -1,5 +1,5 @@
 import numpy as np 
-from math import sqrt, pi, sin, cos, atan, atan2
+from math import sqrt, pi, sin, cos, tan, atan, atan2, acos
 
 class star:
     def __init__(self, name, GM=1.1723328e18, radius=2.616e8):
@@ -63,7 +63,7 @@ class orbit:
     
     List of functions:
     1. calc_missing_parameters: Calculates missing parameters from given data.
-    2. calc_orbit_from_state_vector: Calculates orbital parameters from state vector.
+    2. calc_orbit_from_burnout_parameters: Calculates orbital parameters from burnout parameters.
     3. check_elliptic: Checks if the orbit is elliptic.
     4. check_hyperbolic: Checks if the orbit is hyperbolic.
     5. calc_mean_anomaly: Calculates the mean anomaly.
@@ -89,8 +89,8 @@ class orbit:
         self.primary = primary
         # either initialize orbit from state vector...
         if 'r' in kwargs and 'v' in kwargs:
-            orbit_kwargs_state_vector = self.calc_orbit_from_state_vector(**kwargs)
-            self.orbit_kwargs = self.calc_missing_parameters(**orbit_kwargs_state_vector)
+            orbit_kwargs_burnout = self.calc_orbit_from_burnout_parameters(**kwargs)
+            self.orbit_kwargs = self.calc_missing_parameters(**orbit_kwargs_burnout)
         # or initialize from orbital parameters
         else:
             self.orbit_kwargs = self.calc_missing_parameters(**kwargs)
@@ -127,35 +127,54 @@ class orbit:
         self.recalc_orbit_visu(self.t0, self.t0+self.T)
 
     #TODO: this is just a stub for now, needs to be implemented
-    def calc_orbit_from_state_vector(self, **kwargs):
-        """Calculate orbital parameters from state vector"""
-        assert('r' in kwargs and 'v' in kwargs), "State vector initialization needs radius and speed"
-        GM = self.primary.GM
-        r = kwargs['r']
-        v = kwargs['v']
-        
-        if 't0' in kwargs:
-            t0 = kwargs['t0']
-        else:
-            t0 = 0
-
-        # if zenith angle is not given, use 90 degrees
-        if 'gamma' in kwargs:
-            gamma = kwargs['gamma']
-        else:
-            gamma = pi/2
+    def calc_orbit_from_burnout_parameters(self, v, r, t0=0, gamma=pi/2, beta=pi/2, delta=0, lambda2=0):
+        """Calculate orbital parameters from burnout parameters. See http://www.braeunig.us/space/orbmech.htm
+        Args:
+            primary: planetary body
+            v: velocity (magnitude only)
+            r: radius (magnitude only)
+            t0: time of orbit initialization
+            gamma: zenith angle
+            beta: azimuth heading measured in radians clockwise from north
+            delta: geocentric latitude (or declination) of the burnout point in radians
+            lambda2: longitude of the burnout point in radians (for simplification it's the celestial longitude)
+        Returns:
+            orbit_kwargs: dictionary with orbital parameters
+        """
         #flight path angle
         phi = pi/2 - gamma
 
+        # semi-major axis
         a = 1/(2/r - v**2/GM)
+        # eccentricity
         e = sqrt((r*v**2/GM - 1)**2 * cos(phi)**2 + sin(phi)**2)
-        mu0 = atan( r*v**2/GM*cos(phi)*sin(phi) /
+        # initial true anomaly
+        nu0 = atan( r*v**2/GM*cos(phi)*sin(phi) /
                   (r*v**2/GM*cos(phi)**2 - 1) )
+        # inclination
+        i = acos(cos(delta)*sin(beta))
+        # angular distance between the ascending node and the burnout point 
+        # measured in the orbital plane
+        l = atan2(tan(delta), cos(beta))
+        # angular distance between the ascending node and the burnout point 
+        # measured in the equatorial plane
+        dl = atan(sin(delta)*tan(beta))
+        # argument of periapsis in degrees
+        omega = (l - nu0)*180/pi
+        # longitude of the ascending node in radians
+        lambda1 = lambda2 - dl
+        # since longitudes are in celestial coordinates, lambda1 is RAAN
+        # just convert here to degrees
+        OMEGA = lambda1*180/pi
+        
         return {
             'a': a,
             'e': e,
             't0': t0,
-            'nu0': mu0
+            'nu0': nu0,
+            'i': i,
+            'omega': omega,
+            'OMEGA': OMEGA
         }
 
     def calc_missing_parameters(self, **kwargs):
