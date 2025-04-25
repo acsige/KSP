@@ -58,8 +58,24 @@ def calc_hohmann(src_orbit, dst_orbit, t0):
 
     return result_orbit
 
-def calc_window(src_orbit, dst_orbit, t0):
+def calc_window(src, dst, t0):
     """Transfer window calculation for Hohmann transfer"""
+    
+    # handle both orbit and planetary body inputs
+    if isinstance(src, planetary_body):
+        src_orbit = src.orbit
+    elif isinstance(src, orbit):
+        src_orbit = src
+    else:
+        raise TypeError('src must be a planetary body or an orbit')
+    if isinstance(dst, planetary_body):
+        dst_orbit = dst.orbit
+    elif isinstance(dst, orbit):
+        dst_orbit = dst
+    else:
+        raise TypeError('dst must be a planetary body or an orbit')
+    
+    # check that the two orbits are around the same primary body
     assert(src_orbit.primary == dst_orbit.primary)
 
     # calculate period of search: time to get to the same angle difference as at zero time
