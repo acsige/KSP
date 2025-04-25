@@ -143,6 +143,8 @@ class orbit:
         """
         #flight path angle
         phi = pi/2 - gamma
+        # GM of the primary body
+        GM = self.primary.GM
 
         # semi-major axis
         a = 1/(2/r - v**2/GM)
