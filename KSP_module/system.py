@@ -28,3 +28,13 @@ Dres = planetary_body('Dres', orbit(Kerbol, a=40839348203, e=0.145, omega=90, OM
 
 Jool = planetary_body('Jool', orbit(Kerbol, a=68773560320, e=0.05, omega=0, OMEGA=52, i=1.304, nu0=0.1),
                         GM=2.82528e14, radius=6e6, atmo_height=2e5)
+
+# Important orbits
+# LKO = Low Kerbin Orbit
+LKO = orbit(Kerbin, min_alt=70000.1, e=0)
+# LMO = Low Mun Orbit
+LMO = orbit(Mun, min_alt=15000, e=0)
+# LDO = Low Duna Orbit
+LDO = orbit(Duna, min_alt=50000.1, e=0)
+# LIO = Low Ike Orbit
+LIO = orbit(Ike, min_alt=15000, e=0)
