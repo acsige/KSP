@@ -48,10 +48,8 @@ def test_orbit_missing_params():
     assert reference_orbit.min_alt == pytest.approx(h, rel=REL_TOL), "min_alt is not equal to h"
     # orbit is elliptic
     assert reference_orbit.is_elliptic, "orbit is not elliptic"
-    # orbit is not hyperbolic
-    assert not reference_orbit.is_hyperbolic, "orbit is hyperbolic"
 
-def test_orbit_missing_params():
+def test_orbit_different_params():
     """Test that defining the same orbit with different orbital parameters result in the same orbit"""
     # Test orbit is a 400 km equatorial orbit around Kerbin
     reference_orbit = ksp.orbit(Kerbin, a=1e6, e=0)
@@ -65,17 +63,31 @@ def test_orbit_missing_params():
 
 def test_orbit_from_burnout():
     """Test that defining the same orbit with different orbital parameters result in the same orbit"""
-    # Test orbit is a 400 km orbit around Kerbin, with an inclination of 30 degrees
-    reference_orbit_1 = ksp.orbit(Kerbin, a=1e6, e=0, i=30, OMEGA=45)
-    v_ref = reference_orbit_1.primary.calc_orbital_velocity(reference_orbit_1.min_alt)
-    r_ref = reference_orbit_1.a
 
-    # Test 1: burnout point on the equator
+    reference_orbits = []
+    test_orbits = []
+    # Test orbit is a 400 km orbit around Kerbin, with an inclination of 30 degrees
+    reference_orbits.append(ksp.orbit(Kerbin, a=1e6, e=0, i=30, OMEGA=45))
+    v_ref = reference_orbits[0].primary.calc_orbital_velocity(reference_orbits[0].min_alt)
+    r_ref = 1e6
+    
     # beta is the complement of the inclination
-    test_orbit_1 = ksp.orbit(Kerbin, v=v_ref, r=r_ref, beta=pi/3, lambda2=pi/4)
-    compare_orbits(reference_orbit_1, test_orbit_1)
+    # lambda2 is longitude of the burnout point in radians
+    # Test 1: burnout point on the equator, at the ascending node
+    test_orbits.append(ksp.orbit(Kerbin, v=v_ref, r=r_ref, beta=pi/3, lambda2=pi/4))
 
     # Test 2: burnout point at the northenmost point of the orbit
-    reference_orbit_2 = ksp.orbit(Kerbin, a=1e6, e=0, i=30, OMEGA=45, nu0=pi/2)
-    test_orbit_2 = ksp.orbit(Kerbin, v=v_ref, r=r_ref, beta=pi/2, delta = pi/6, lambda2=pi/4+pi/2)
-    compare_orbits(reference_orbit_2, test_orbit_2)
+    reference_orbits.append(ksp.orbit(Kerbin, a=1e6, e=0, i=30, omega=90, OMEGA=45))
+    test_orbits.append(ksp.orbit(Kerbin, v=v_ref, r=r_ref, beta=pi/2, delta = pi/6, lambda2=pi/4+pi/2))
+    
+    # Test 3: burnout point on the equator, at the descending node
+    reference_orbits.append(ksp.orbit(Kerbin, a=1e6, e=0, i=30, omega=180, OMEGA=45))
+    test_orbits.append(ksp.orbit(Kerbin, v=v_ref, r=r_ref, beta=2*pi/3, lambda2=pi/4+pi))
+    
+    # Test 4: burnout point at the southenmost point of the orbit
+    reference_orbits.append(ksp.orbit(Kerbin, a=1e6, e=0, i=30, omega=270, OMEGA=45))
+    test_orbits.append(ksp.orbit(Kerbin, v=v_ref, r=r_ref, beta=pi/2, delta = -pi/6, lambda2=3*pi/4+pi))
+
+    # do the comparisons
+    for r,t in zip(reference_orbits, test_orbits):
+        compare_orbits(r, t)

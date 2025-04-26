@@ -155,11 +155,13 @@ class orbit:
         # inclination in degrees
         i = acos(cos(delta)*sin(beta))*180/pi
         # angular distance between the ascending node and the burnout point 
-        # measured in the orbital plane
+        # measured in the orbital plane, 0-2*pi
         l = atan2(tan(delta), cos(beta))
+        if l < 0: l += 2*pi
         # angular distance between the ascending node and the burnout point 
-        # measured in the equatorial plane
-        dl = atan(sin(delta)*tan(beta))
+        # measured in the equatorial plane, 0-2*pi
+        dl = atan2(sin(delta), 1/tan(beta))
+        if dl < 0: dl += 2*pi
         # argument of periapsis in degrees
         omega = (l - nu0)*180/pi
         # longitude of the ascending node in radians
