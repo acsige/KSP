@@ -14,18 +14,18 @@ def test_star():
         isinstance(Kerbol.primary, object)
     print("Star test passed")
 
-def compare_orbits(orbit1, orbit2, REL_TOL=1e-9):
+def compare_orbits(orbit_1, orbit_2, REL_TOL=1e-9):
     """Compare two orbits to see if they are the same"""
-    assert isinstance(orbit1, ksp.orbit), "orbit1 is not an orbit instance"
-    assert isinstance(orbit2, ksp.orbit), "orbit2 is not an orbit instance"
-    assert orbit1.primary == pytest.approx(orbit2.primary, rel=REL_TOL), "Orbits do not have the same primary body"
-    assert orbit1.a == pytest.approx(orbit2.a, rel=REL_TOL), "Semi-major axes are not equal"
-    assert orbit1.e == pytest.approx(orbit2.e, rel=REL_TOL), "Eccentricities are not equal"
-    assert orbit1.omega == pytest.approx(orbit2.omega, rel=REL_TOL), "Argument of periapsis are not equal"
-    assert orbit1.i == pytest.approx(orbit2.i, rel=REL_TOL), "Inclinations are not equal"
-    assert orbit1.OMEGA == pytest.approx(orbit2.OMEGA, rel=REL_TOL), "Longitudes of ascending node are not equal"
-    assert orbit1.nu0 == pytest.approx(orbit2.nu0, rel=REL_TOL), "True anomalies are not equal"
-    assert orbit1.t0 == pytest.approx(orbit2.t0, rel=REL_TOL), "Epochs are not equal"
+    assert isinstance(orbit_1, ksp.orbit), "orbit1 is not an orbit instance"
+    assert isinstance(orbit_2, ksp.orbit), "orbit2 is not an orbit instance"
+    assert orbit_1.primary == pytest.approx(orbit_2.primary, rel=REL_TOL), "Orbits do not have the same primary body"
+    assert orbit_1.a == pytest.approx(orbit_2.a, rel=REL_TOL), "Semi-major axes are not equal"
+    assert orbit_1.e == pytest.approx(orbit_2.e, rel=REL_TOL), "Eccentricities are not equal"
+    assert orbit_1.omega == pytest.approx(orbit_2.omega, rel=REL_TOL), "Argument of periapsis are not equal"
+    assert orbit_1.i == pytest.approx(orbit_2.i, rel=REL_TOL), "Inclinations are not equal"
+    assert orbit_1.OMEGA == pytest.approx(orbit_2.OMEGA, rel=REL_TOL), "Longitudes of ascending node are not equal"
+    assert orbit_1.nu0 == pytest.approx(orbit_2.nu0, rel=REL_TOL), "True anomalies are not equal"
+    assert orbit_1.t0 == pytest.approx(orbit_2.t0, rel=REL_TOL), "Epochs are not equal"
 
 def test_orbit_missing_params():
     """Test that some parameters calculated during initialization are correct"""
@@ -65,11 +65,17 @@ def test_orbit_missing_params():
 
 def test_orbit_from_burnout():
     """Test that defining the same orbit with different orbital parameters result in the same orbit"""
-    # Test orbit is a 400 km orbit around Kerbin, with an inclination of 45 degrees
-    reference_orbit = ksp.orbit(Kerbin, a=1e6, e=0, i=45)
-    v_ref = reference_orbit.primary.calc_orbital_velocity(reference_orbit.min_alt)
-    r_ref = reference_orbit.a
+    # Test orbit is a 400 km orbit around Kerbin, with an inclination of 30 degrees
+    reference_orbit_1 = ksp.orbit(Kerbin, a=1e6, e=0, i=30, OMEGA=45)
+    v_ref = reference_orbit_1.primary.calc_orbital_velocity(reference_orbit_1.min_alt)
+    r_ref = reference_orbit_1.a
 
-    test_orbit = ksp.orbit(Kerbin, v=v_ref, r=r_ref, beta=pi/2)
+    # Test 1: burnout point on the equator
+    # beta is the complement of the inclination
+    test_orbit_1 = ksp.orbit(Kerbin, v=v_ref, r=r_ref, beta=pi/3, lambda2=pi/4)
+    compare_orbits(reference_orbit_1, test_orbit_1)
 
-    compare_orbits(reference_orbit, test_orbit)
+    # Test 2: burnout point at the northenmost point of the orbit
+    reference_orbit_2 = ksp.orbit(Kerbin, a=1e6, e=0, i=30, OMEGA=45, nu0=pi/2)
+    test_orbit_2 = ksp.orbit(Kerbin, v=v_ref, r=r_ref, beta=pi/2, delta = pi/6, lambda2=pi/4+pi/2)
+    compare_orbits(reference_orbit_2, test_orbit_2)

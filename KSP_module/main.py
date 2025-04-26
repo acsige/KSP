@@ -152,8 +152,8 @@ class orbit:
         e = sqrt((r*v**2/GM - 1)**2 * cos(phi)**2 + sin(phi)**2)
         # initial true anomaly
         nu0 = atan2( r*v**2/GM*cos(phi)*sin(phi), (r*v**2/GM*cos(phi)**2 - 1) )
-        # inclination
-        i = acos(cos(delta)*sin(beta))
+        # inclination in degrees
+        i = acos(cos(delta)*sin(beta))*180/pi
         # angular distance between the ascending node and the burnout point 
         # measured in the orbital plane
         l = atan2(tan(delta), cos(beta))
