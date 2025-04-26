@@ -1,4 +1,5 @@
 import numpy as np
+from math import pi
 import KSP_module as ksp
 from KSP_module import Kerbol, Kerbin
 import pytest
@@ -8,29 +9,67 @@ def test_star():
     assert isinstance(Kerbol, ksp.star), "Kerbol is not a star instance"
     assert Kerbol.__name__ == 'Kerbol', "Kerbol name is incorrect"
     assert np.linalg.vector_norm(Kerbol.calc_xyz(0)) == 0, "Kerbol position is not at the origin"
+    # star should not have a primary body
+    with pytest.raises(AttributeError):
+        isinstance(Kerbol.primary, object)
     print("Star test passed")
 
-def compare_orbits(orbit1, orbit2):
-    # Inner function to compare two orbits
+def compare_orbits(orbit1, orbit2, REL_TOL=1e-9):
+    """Compare two orbits to see if they are the same"""
     assert isinstance(orbit1, ksp.orbit), "orbit1 is not an orbit instance"
     assert isinstance(orbit2, ksp.orbit), "orbit2 is not an orbit instance"
-    assert orbit1.primary == pytest.approx(orbit2.primary, 1e-9), "Orbits do not have the same primary body"
-    assert orbit1.a == pytest.approx(orbit2.a, 1e-9), "Semi-major axes are not equal"
-    assert orbit1.e == pytest.approx(orbit2.e, 1e-9), "Eccentricities are not equal"
-    assert orbit1.omega == pytest.approx(orbit2.omega, 1e-9), "Argument of periapsis are not equal"
-    assert orbit1.i == pytest.approx(orbit2.i, 1e-9), "Inclinations are not equal"
-    assert orbit1.OMEGA == pytest.approx(orbit2.OMEGA, 1e-9), "Longitudes of ascending node are not equal"
-    assert orbit1.nu0 == pytest.approx(orbit2.nu0, 1e-9), "True anomalies are not equal"
-    assert orbit1.t0 == pytest.approx(orbit2.t0, 1e-9), "Epochs are not equal"
+    assert orbit1.primary == pytest.approx(orbit2.primary, rel=REL_TOL), "Orbits do not have the same primary body"
+    assert orbit1.a == pytest.approx(orbit2.a, rel=REL_TOL), "Semi-major axes are not equal"
+    assert orbit1.e == pytest.approx(orbit2.e, rel=REL_TOL), "Eccentricities are not equal"
+    assert orbit1.omega == pytest.approx(orbit2.omega, rel=REL_TOL), "Argument of periapsis are not equal"
+    assert orbit1.i == pytest.approx(orbit2.i, rel=REL_TOL), "Inclinations are not equal"
+    assert orbit1.OMEGA == pytest.approx(orbit2.OMEGA, rel=REL_TOL), "Longitudes of ascending node are not equal"
+    assert orbit1.nu0 == pytest.approx(orbit2.nu0, rel=REL_TOL), "True anomalies are not equal"
+    assert orbit1.t0 == pytest.approx(orbit2.t0, rel=REL_TOL), "Epochs are not equal"
 
-def test_orbit():
+def test_orbit_missing_params():
+    """Test that some parameters calculated during initialization are correct"""
+    REL_TOL=1e-9
+    #TODO: there should be a better way than copy-pasting the orbit definition
+    # Test orbit is a 400 km equatorial orbit around Kerbin
+    reference_orbit = ksp.orbit(Kerbin, a=1e6, e=0)
+    # orbital speed calculated by the primary body
+    h = 4e5
+    v = reference_orbit.primary.calc_orbital_velocity(h)
+
+    # Circular orbit periapsis and apoapsis are equal to the semi-major axis
+    assert reference_orbit.ra == pytest.approx(reference_orbit.a, rel=REL_TOL), "ra is not equal to a"
+    assert reference_orbit.rp == pytest.approx(reference_orbit.a, rel=REL_TOL), "rp is not equal to a"
+    # Circular orbit max and min speed are the same, and equal to the orbital speed calculated by the primary body
+    assert reference_orbit.va == pytest.approx(v, rel=REL_TOL), "va is not equal to v"
+    assert reference_orbit.vp == pytest.approx(v, rel=REL_TOL), "vp is not equal to v"
+    # Circular orbit max and min altitude are the same, and equal to the value defined earlier
+    assert reference_orbit.max_alt == pytest.approx(h, rel=REL_TOL), "max_alt is not equal to h"
+    assert reference_orbit.min_alt == pytest.approx(h, rel=REL_TOL), "min_alt is not equal to h"
+    # orbit is elliptic
+    assert reference_orbit.is_elliptic, "orbit is not elliptic"
+    # orbit is not hyperbolic
+    assert not reference_orbit.is_hyperbolic, "orbit is hyperbolic"
+
+def test_orbit_missing_params():
     """Test that defining the same orbit with different orbital parameters result in the same orbit"""
-    # Test orbit is a 400 km circular orbit around Kerbin
-    test_orbit = ksp.orbit(Kerbin, a=1e6, e=0)
+    # Test orbit is a 400 km equatorial orbit around Kerbin
+    reference_orbit = ksp.orbit(Kerbin, a=1e6, e=0)
 
-    compare_orbits(ksp.orbit(Kerbin, min_alt=4e5, e=0), test_orbit)
-    compare_orbits(ksp.orbit(Kerbin, min_alt=4e5, max_alt=4e5), test_orbit)
-    compare_orbits(ksp.orbit(Kerbin, rp=1e6, ra=1e6), test_orbit)
-    compare_orbits(ksp.orbit(Kerbin, min_alt=4e5, ra=1e6), test_orbit)
-    compare_orbits(ksp.orbit(Kerbin, rp=1e6, max_alt=4e5), test_orbit)
-    compare_orbits(ksp.orbit(Kerbin, T=test_orbit.T, e=0), test_orbit)
+    compare_orbits(ksp.orbit(Kerbin, min_alt=4e5, e=0), reference_orbit)
+    compare_orbits(ksp.orbit(Kerbin, min_alt=4e5, max_alt=4e5), reference_orbit)
+    compare_orbits(ksp.orbit(Kerbin, rp=1e6, ra=1e6), reference_orbit)
+    compare_orbits(ksp.orbit(Kerbin, min_alt=4e5, ra=1e6), reference_orbit)
+    compare_orbits(ksp.orbit(Kerbin, rp=1e6, max_alt=4e5), reference_orbit)
+    compare_orbits(ksp.orbit(Kerbin, T=reference_orbit.T, e=0), reference_orbit)
+
+def test_orbit_from_burnout():
+    """Test that defining the same orbit with different orbital parameters result in the same orbit"""
+    # Test orbit is a 400 km orbit around Kerbin, with an inclination of 45 degrees
+    reference_orbit = ksp.orbit(Kerbin, a=1e6, e=0, i=45)
+    v_ref = reference_orbit.primary.calc_orbital_velocity(reference_orbit.min_alt)
+    r_ref = reference_orbit.a
+
+    test_orbit = ksp.orbit(Kerbin, v=v_ref, r=r_ref, beta=pi/2)
+
+    compare_orbits(reference_orbit, test_orbit)
