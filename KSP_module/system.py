@@ -34,7 +34,11 @@ Jool = planetary_body('Jool', orbit(Kerbol, a=68773560320, e=0.05, omega=0, OMEG
 LKO = orbit(Kerbin, min_alt=70000.1, e=0)
 # LMO = Low Mun Orbit
 LMO = orbit(Mun, min_alt=15000, e=0)
+
 # LDO = Low Duna Orbit
 LDO = orbit(Duna, min_alt=50000.1, e=0)
 # LIO = Low Ike Orbit
 LIO = orbit(Ike, min_alt=15000, e=0)
+
+# LEO = Low Eve Orbit
+LEO = orbit(Eve, min_alt=90000.1, e=0)
